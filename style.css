@@ -1,0 +1,402 @@
+:root {
+    --primary-bg: #100732;
+    --card-bg: rgba(0, 0, 0, 0.4);
+    /* Fundo escuro universal e neutro para combinar com qualquer cor do site */
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #10b981;
+    /* WhatsApp Greenish Accent */
+    --accent-hover: #059669;
+    --card-radius: 20px;
+    --transition-speed: 0.3s;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--primary-bg);
+    color: var(--text-main);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header Styles */
+.header {
+    padding: 5rem 0 4rem 0;
+    /* Um pouco mais alto para a foto aparecer bem */
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    /* Necessário para o pseudo-elemento absoluto */
+}
+
+/* Os pseudo-elementos abaixo hospedam as duas imagens de fundo injetadas. 
+   O CSS lida com a transição de opacidade (crossfade) super suave entre elas! */
+.header::before, .header::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+    /* Transição mágica e lenta de 2 segundos de esfumaçamento */
+    transition: opacity 2s ease-in-out;
+    /* A máscara faz com que a opacidade dessa imagem desapareça totalmente aos 98% da altura */
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 85%, transparent 98%);
+    mask-image: linear-gradient(to bottom, black 0%, black 85%, transparent 98%);
+}
+
+.header::before {
+    background-image: var(--header-bg-image-1);
+    opacity: 0.35; /* Imagem 1 começa visível */
+}
+
+.header::after {
+    background-image: var(--header-bg-image-2);
+    opacity: 0; /* Imagem 2 começa escondida */
+}
+
+/* Quando o JS injeta essa classe, a Imagem 1 esconde e a Imagem 2 aparece */
+.header.show-second-bg::before {
+    opacity: 0;
+}
+.header.show-second-bg::after {
+    opacity: 0.35;
+}
+
+.header .container {
+    position: relative;
+    z-index: 1;
+    /* Garante que os textos do título e logo fiquem ACIMA da imagem com opacidade */
+}
+
+.logo {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 0.5rem;
+}
+
+.logo span {
+    color: var(--accent);
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+}
+
+/* Menu Grid */
+.menu-section {
+    flex: 1;
+    margin-bottom: 4rem;
+}
+
+.section-title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 50%;
+    height: 3px;
+    background-color: var(--accent);
+    border-radius: 2px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+/* Card Styles - Glassmorphism */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.card-image-wrapper {
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+    position: relative;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.card:hover .card-image {
+    transform: scale(1.08);
+}
+
+.card-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.card-description {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    flex: 1;
+    /* Pushes footer to bottom */
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.price {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+/* Premium Button */
+.btn-order {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-family: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition-speed) ease;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-order:hover {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+}
+
+.btn-order:active {
+    transform: scale(0.98);
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--text-muted);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header {
+        padding: 2.5rem 0;
+    }
+
+    .logo {
+        font-size: 2.5rem;
+    }
+
+    .brand-logo {
+        max-width: 120px;
+        height: 120px;
+        margin-bottom: 0.5rem;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+        /* 2 Protudos Lado a Lado */
+        gap: 0.8rem;
+        /* Espaçamento menor entre os cards */
+    }
+
+    .card-image-wrapper {
+        height: 120px;
+        /* Imagens um pouco menores para não alongar muito a tela */
+    }
+
+    .card-content {
+        padding: 0.8rem;
+        /* Margens internas mais justas */
+    }
+
+    .card-title {
+        font-size: 1rem;
+        /* Título um pouco menor */
+        line-height: 1.2;
+        margin-bottom: 0.3rem;
+    }
+
+    .card-description {
+        font-size: 0.8rem;
+        /* Descrição menor para não tomar tanto espaço vertical */
+        margin-bottom: 0.8rem;
+    }
+
+    .card-footer {
+        flex-direction: column;
+        /* Coloca o botão Embaixo do preço no celular para evitar furos */
+        align-items: flex-start;
+        gap: 0.6rem;
+    }
+
+    .price {
+        font-size: 1.1rem;
+    }
+
+    .btn-order {
+        width: 100%;
+        /* Botão largo acompanhando as 2 coluninhas */
+        justify-content: center;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .container {
+        width: 96%;
+        /* Ganhar o máximo de espaço na largura da tela */
+    }
+
+    .btn-category {
+        padding: 0.5rem 1.2rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Category Menu */
+.menu-header {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.category-menu {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+    /* Firefox */
+    -webkit-overflow-scrolling: touch;
+    /* Scroll suave e natural nos iPhones (iOS) */
+    scroll-behavior: smooth;
+}
+
+.category-menu::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari */
+}
+
+.btn-category {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    /* Garante que os botões MANTENHAM seu tamanho original e ativem o scroll! */
+    transition: all var(--transition-speed) ease;
+}
+
+.btn-category:hover {
+    color: var(--text-main);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-category.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+/* Logo Styles & Animations */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    50% {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    100% {
+        transform: translateY(0px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+}
+
+.brand-logo {
+    max-width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    /* Faz a imagem ficar perfeitamente redonda */
+    margin: 0 auto 1rem auto;
+    display: block;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    /* Uma sombra leve para dar muito destaque */
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    /* Efeito de borda fina elegante */
+    animation: float 4s ease-in-out infinite;
+    /* Animação flutuante premium e super leve */
+}
