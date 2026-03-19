@@ -5,7 +5,7 @@
 
 const CONFIG = {
     // 1. Seu número de WhatsApp (Apenas números, inclua DDD. Ex: 5511999999999)
-    whatsappNumber: "5511999999999",
+    whatsappNumber: "5563999756166",
     
     // 2. O nome do seu estabelecimento
     name: "SeuNegócio",
