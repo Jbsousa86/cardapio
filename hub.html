@@ -23,18 +23,20 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 2rem;
+            padding: 1rem;
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: 2rem;
             margin-bottom: 0.5rem;
             font-weight: 800;
+            text-align: center;
         }
 
         p {
             color: #94a3b8;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
+            text-align: center;
         }
 
         .grid {
@@ -72,34 +74,25 @@
             width: 80px; height: 80px;
             display: flex; align-items: center; justify-content: center;
             border-radius: 50%;
-            margin-bottom: 0.5rem;
-        }
-
-        .store-name {
-            font-size: 1.25rem;
-            font-weight: 600;
         }
 
         .btn {
             background: var(--accent);
             color: white;
-            padding: 0.6rem 1.2rem;
+            padding: 0.8rem 1.5rem;
             border-radius: 50px;
             font-weight: 600;
-            margin-top: 0.5rem;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
         }
-    </style>
-</head>
-<body>
 
-    <style>
-        /* Estilos do bloqueio de senha */
+        /* Estilos do Login */
         #login-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 100;
@@ -107,34 +100,36 @@
 
         .login-box {
             background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            width: 90%;
-            max-width: 400px;
+            width: 92%;
+            max-width: 380px;
+            backdrop-filter: blur(15px);
         }
 
         .login-box input {
             width: 100%;
-            padding: 0.8rem;
-            margin: 1rem 0;
-            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0 1rem 0;
+            border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             background: rgba(0,0,0,0.3);
             color: white;
             font-family: inherit;
+            font-size: 1.1rem;
             text-align: center;
+            box-sizing: border-box;
         }
 
         #error-msg {
             color: #ef4444;
             font-size: 0.9rem;
-            margin-top: 0.5rem;
+            margin-top: 1rem;
             display: none;
         }
 
-        /* Oculta o conteúdo por padrão */
         #main-content {
             display: none;
             flex-direction: column;
@@ -145,65 +140,65 @@
 </head>
 <body>
 
-    <!-- Tela de Login Administrador -->
+    <!-- Tela de Login -->
     <div id="login-overlay">
         <div class="login-box">
             <div class="store-icon">🔐</div>
             <h2>Acesso Restrito</h2>
             <p>Digite a senha administrativa</p>
-            <input type="password" id="admin-pass" placeholder="Sua senha aqui...">
-            <button class="btn" style="border:none; width: 100%; cursor: pointer;" onclick="checkAccess()">Entrar no Painel</button>
-            <p id="error-msg">Senha incorreta. Tente novamente.</p>
+            <input type="password" id="admin-pass" placeholder="Senha">
+            <button class="btn" onclick="checkAccess()">Entrar no Painel</button>
+            <p id="error-msg">Senha incorreta!</p>
         </div>
     </div>
 
-    <!-- Conteúdo Principal (Só aparece após logar) -->
+    <!-- Conteúdo Principal -->
     <div id="main-content">
-        <h1>Painel de Acesso</h1>
-        <p>Escolha o estabelecimento que deseja abrir no PC</p>
+        <h1>Painel de Lojas</h1>
+        <p>Acesse o cardápio de cada estabelecimento</p>
 
         <div class="grid" id="store-grid">
-            <!-- Gerado Automaticamente -->
+            <!-- Gerado via JS -->
         </div>
     </div>
 
     <script src="data.js"></script>
     <script>
-        const ADMIN_PASSWORD = "admin123"; // <--- Altere sua senha aqui!
+        const ADMIN_PASSWORD = "admin123";
         const overlay = document.getElementById('login-overlay');
         const mainContent = document.getElementById('main-content');
         const errorMsg = document.getElementById('error-msg');
 
-        // Função para verificar se já está logado
         function checkSession() {
             if (sessionStorage.getItem('isLoggedIn') === 'true') {
-                overlay.style.display = 'none';
-                mainContent.style.display = 'flex';
-                renderStores();
+                showContent();
             }
         }
 
-        // Função principal do login
         function checkAccess() {
             const pass = document.getElementById('admin-pass').value;
             if (pass === ADMIN_PASSWORD) {
                 sessionStorage.setItem('isLoggedIn', 'true');
-                overlay.style.display = 'none';
-                mainContent.style.display = 'flex';
-                renderStores();
+                showContent();
             } else {
                 errorMsg.style.display = 'block';
             }
         }
 
+        function showContent() {
+            overlay.style.display = 'none';
+            mainContent.style.display = 'flex';
+            renderStores();
+        }
+
         function renderStores() {
             const storeGrid = document.getElementById('store-grid');
-            storeGrid.innerHTML = ''; // Limpa antes de renderizar
+            storeGrid.innerHTML = '';
 
             const icons = {
                 'default': '🏠',
                 'pizzaria': '🍕',
-                'acai': '🍧'
+                'Imperio-do-Acai': '🍧'
             };
 
             Object.keys(STORES_DATA).forEach(key => {
@@ -217,13 +212,12 @@
                 card.innerHTML = `
                     <div class="store-icon">${icon}</div>
                     <div class="store-name">${name}</div>
-                    <div class="btn">Acessar Cardápio</div>
+                    <div class="btn">Abrir Cardápio</div>
                 `;
                 storeGrid.appendChild(card);
             });
         }
 
-        // Inicia verificação
         checkSession();
     </script>
 </body>

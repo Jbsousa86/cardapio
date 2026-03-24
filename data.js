@@ -81,7 +81,7 @@ const STORES_DATA = {
             }
         ]
     },
-    "acai": {
+    "Imperio-do-Acai": {
         CONFIG: {
             whatsappNumber: "5511888888888",
             name: "Império do",
@@ -91,7 +91,7 @@ const STORES_DATA = {
             logoUrl: "https://tse3.mm.bing.net/th/id/OIP.hcZm1Ia-BjWejDvNTzOItgHaEw?pid=Api&P=0&h=180",
             headerImageUrls: [
                 "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-                "https://images.unsplash.com/photo-1594911776100-8430a6c6734c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                "https://images.unsplash.com/photo-1589110281682-108bb6361a6b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
             ],
             theme: {
                 primaryBg: "#12041d", // Roxo "Noite" Profundo
@@ -100,33 +100,33 @@ const STORES_DATA = {
             }
         },
         PRODUCTS: [
-            { 
-                name: "Copo Tradicional 300ml", 
-                description: "Açaí premium com banana, granola e mel.", 
-                price: 15.00, 
-                image: "https://tse3.mm.bing.net/th/id/OIP.h8U2iwO_IkuZL5YiHPjlbgHaHa?pid=Api&P=0&h=180", 
-                category: "Copos" 
+            {
+                name: "Copo Tradicional 300ml",
+                description: "Açaí premium com banana, granola e mel.",
+                price: 15.00,
+                image: "https://tse3.mm.bing.net/th/id/OIP.h8U2iwO_IkuZL5YiHPjlbgHaHa?pid=Api&P=0&h=180",
+                category: "Copos"
             },
-            { 
-                name: "Copo Turbo 500ml", 
-                description: "Leite em pó, morango, paçoca e cobertura de chocolate.", 
-                price: 22.00, 
-                image: "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", 
-                category: "Copos" 
+            {
+                name: "Copo Turbo 500ml",
+                description: "Leite em pó, morango, paçoca e cobertura de chocolate.",
+                price: 22.00,
+                image: "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                category: "Copos"
             },
-            { 
-                name: "Açaí no Quilo (Auto-Serviço)", 
-                description: "Escolha seus acompanhamentos e monte do seu jeito no balcão.", 
-                price: 18.00, 
-                image: "https://tse4.mm.bing.net/th/id/OIP.ySwJqa9OKrkE8MlOidjmZgHaJ3?pid=Api&P=0&h=180", 
-                category: "Self-Service" 
+            {
+                name: "Açaí no Quilo (Auto-Serviço)",
+                description: "Escolha seus acompanhamentos e monte do seu jeito no balcão.",
+                price: 18.00,
+                image: "https://tse4.mm.bing.net/th/id/OIP.ySwJqa9OKrkE8MlOidjmZgHaJ3?pid=Api&P=0&h=180",
+                category: "Self-Service"
             },
-            { 
-                name: "Barca Especial (Para Dois)", 
-                description: "600g de açaí, 4 frutas, 3 cereais e bordinha de Nutella.", 
-                price: 45.00, 
-                image: "https://tse1.mm.bing.net/th/id/OIP.G6N7y9XNAt0s3U8f_vVqPAHaHa?pid=Api&P=0&h=180", 
-                category: "Especiais" 
+            {
+                name: "Barca Especial (Para Dois)",
+                description: "600g de açaí, 4 frutas, 3 cereais e bordinha de Nutella.",
+                price: 45.00,
+                image: "https://images.unsplash.com/photo-1594911776100-8430a6c6734c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                category: "Especiais"
             }
         ]
     }
