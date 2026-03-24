@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Lojas | Cardápio Multi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text: #f8fafc;
+            --accent: #10b981;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+        }
+
+        p {
+            color: #94a3b8;
+            margin-bottom: 3rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .store-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .store-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .store-icon {
+            font-size: 2.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            width: 80px; height: 80px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            margin-bottom: 0.5rem;
+        }
+
+        .store-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <style>
+        /* Estilos do bloqueio de senha */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .login-box {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0,0,0,0.3);
+            color: white;
+            font-family: inherit;
+            text-align: center;
+        }
+
+        #error-msg {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* Oculta o conteúdo por padrão */
+        #main-content {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Tela de Login Administrador -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <div class="store-icon">🔐</div>
+            <h2>Acesso Restrito</h2>
+            <p>Digite a senha administrativa</p>
+            <input type="password" id="admin-pass" placeholder="Sua senha aqui...">
+            <button class="btn" style="border:none; width: 100%; cursor: pointer;" onclick="checkAccess()">Entrar no Painel</button>
+            <p id="error-msg">Senha incorreta. Tente novamente.</p>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal (Só aparece após logar) -->
+    <div id="main-content">
+        <h1>Painel de Acesso</h1>
+        <p>Escolha o estabelecimento que deseja abrir no PC</p>
+
+        <div class="grid" id="store-grid">
+            <!-- Gerado Automaticamente -->
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        const ADMIN_PASSWORD = "admin123"; // <--- Altere sua senha aqui!
+        const overlay = document.getElementById('login-overlay');
+        const mainContent = document.getElementById('main-content');
+        const errorMsg = document.getElementById('error-msg');
+
+        // Função para verificar se já está logado
+        function checkSession() {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                overlay.style.display = 'none';
+                mainContent.style.display = 'flex';
+                renderStores();
+            }
+        }
+
+        // Função principal do login
+        function checkAccess() {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === ADMIN_PASSWORD) {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                overlay.style.display = 'none';
+                mainContent.style.display = 'flex';
+                renderStores();
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function renderStores() {
+            const storeGrid = document.getElementById('store-grid');
+            storeGrid.innerHTML = ''; // Limpa antes de renderizar
+
+            const icons = {
+                'default': '🏠',
+                'pizzaria': '🍕',
+                'acai': '🍧'
+            };
+
+            Object.keys(STORES_DATA).forEach(key => {
+                const store = STORES_DATA[key];
+                const name = `${store.CONFIG.name} ${store.CONFIG.nameHighlight}`;
+                const icon = icons[key] || '🛍️';
+
+                const card = document.createElement('a');
+                card.href = `index.html?s=${key}`;
+                card.className = 'store-card';
+                card.innerHTML = `
+                    <div class="store-icon">${icon}</div>
+                    <div class="store-name">${name}</div>
+                    <div class="btn">Acessar Cardápio</div>
+                `;
+                storeGrid.appendChild(card);
+            });
+        }
+
+        // Inicia verificação
+        checkSession();
+    </script>
+</body>
+</html>

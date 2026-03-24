@@ -99,6 +99,52 @@ body {
     color: var(--text-muted);
 }
 
+.brand-slogan {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+
+/* Botão de Compartilhar Discreto */
+.btn-share {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    background: rgba(255, 255, 255, 0.05); /* Bem transparente */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    border-radius: 50%; /* Redondo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(5px);
+    z-index: 20;
+}
+
+.btn-share:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: rotate(15deg) scale(1.1);
+}
+
+.btn-share:active {
+    transform: scale(0.9);
+}
+
+@media (max-width: 768px) {
+    .btn-share {
+        top: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+    }
+}
+
 /* Menu Grid */
 .menu-section {
     flex: 1;

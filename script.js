@@ -1,71 +1,18 @@
 // ==========================================
-// CONFIGURAÇÕES GERAIS DO ESTABELECIMENTO
+// CONFIGURAÇÕES DOS ESTABELECIMENTOS
 // ==========================================
-// Altere os valores abaixo de acordo com o seu negócio. O site vai se atualizar sozinho!
-
-const CONFIG = {
-    // 1. Seu número de WhatsApp (Apenas números, inclua DDD. Ex: 5511999999999)
-    whatsappNumber: "5563999756166",
-    
-    // 2. O nome do seu estabelecimento
-    name: "SeuNegócio",
-    
-    // 3. A segunda parte do nome (Fica verde/em destaque)
-    nameHighlight: "Aqui",
-    
-    // 4. Frase de subtítulo (Abaixo do nome)
-    subtitle: "A melhor experiência em delivery da cidade!",
-    
-    // 5. Frase extra ou slogan (Se quiser apagar, deixe vazio "")
-    slogan: "Aberto de Terça a Domingo das 18h às 23h",
-    
-    // 6. Imagem da sua Logo (Se não tiver, deixe vazio "")
-    logoUrl: "./images/image.png",
-    
-    // 7. Imagens de fundo do Cabeçalho (Crossfade)
-    // Deixei duas imagens diferentes para que fiquem trocando sozinhas!
-    headerImageUrls: [
-        "https://images.unsplash.com/photo-1550547660-d9450f859349?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-        "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
-    ],
-};
-
 
 // ==========================================
-// LISTA DE PRODUTOS
+// SELEÇÃO AUTOMÁTICA DA LOJA
 // ==========================================
-// Edite, copie e cole blocos entre chaves {} para adicionar mais itens.
 
-const PRODUCTS = [
-    {
-        name: "Hambúrguer Clássico",
-        description: "Pão, carne artesanal de 160g, queijo, alface e tomate.",
-        price: 25.90,
-        image: "./images/burger.png",
-        category: "Lanches"
-    },
-    {
-        name: "Pizza de Calabresa",
-        description: "Massa fina, molho de tomate, calabresa fatiada, cebola e orégano.",
-        price: 45.00,
-        image: "./images/pizza.png",
-        category: "Pizzas"
-    },
-    {
-        name: "Bolo de Chocolate",
-        description: "Fatia deliciosa de bolo de chocolate com cobertura cremosa.",
-        price: 15.50,
-        image: "./images/dessert.png",
-        category: "Sobremesas"
-    },
-    {
-        name: "Refrigerante 350ml",
-        description: "Lata gelada (Guaraná, Coca-cola, Sprite).",
-        price: 6.00,
-        image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-        category: "Bebidas"
-    }
-];
+const urlParams = new URLSearchParams(window.location.search);
+const storeId = urlParams.get('s') || 'default';
+console.log("Loja detectada:", storeId);
+const currentStore = STORES_DATA[storeId] || STORES_DATA['default'];
+
+const CONFIG = currentStore.CONFIG;
+const PRODUCTS = currentStore.PRODUCTS;
 
 // ==========================================
 // LÓGICA DO SITE (NÃO PRECISA MEXER AQUI)
@@ -75,47 +22,54 @@ function formatPrice(priceNumber) {
     return `R$ ${priceNumber.toFixed(2).replace('.', ',')}`;
 }
 
-// Força a página a carregar sempre no topo absoluto, ignorando o cache de rolagem do navegador
 if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
 }
 
+// Função para aplicar o tema visual
+function applyTheme(theme) {
+    if (!theme) return;
+    const root = document.documentElement;
+    if (theme.primaryBg) root.style.setProperty('--primary-bg', theme.primaryBg);
+    if (theme.accent) root.style.setProperty('--accent', theme.accent);
+    if (theme.accentHover) root.style.setProperty('--accent-hover', theme.accentHover);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-    // Joga a tela de volta pro topo imediatamente após o carregamento
     window.scrollTo(0, 0);
 
-    // 1. Aplicar Configurações Visuais Automatically
+    // Aplica as cores da marca
+    applyTheme(CONFIG.theme);
+
     document.title = `Menu | ${CONFIG.name}${CONFIG.nameHighlight}`;
     document.getElementById("brand-name").innerHTML = `${CONFIG.name}<span>${CONFIG.nameHighlight}</span>`;
     document.getElementById("brand-subtitle").textContent = CONFIG.subtitle;
     document.getElementById("brand-slogan").textContent = CONFIG.slogan;
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // Mostrar ou esconder logo baseada na configuração
     const logoImg = document.getElementById("brand-logo");
     if (CONFIG.logoUrl && CONFIG.logoUrl !== "") {
         logoImg.src = CONFIG.logoUrl;
-        logoImg.style.display = "block"; // Revela a logo se existir
+        logoImg.style.display = "block";
+    } else {
+        logoImg.style.display = "none";
     }
 
-    // Configurar as imagens de fundo em slide
     const headerElement = document.querySelector(".header");
     if (CONFIG.headerImageUrls && CONFIG.headerImageUrls.length > 0) {
-        // Define a primeira imagem
         headerElement.style.setProperty("--header-bg-image-1", `url('${CONFIG.headerImageUrls[0]}')`);
         
-        // Se houver uma segunda imagem, define ela e inicia o temporizador "pisca-pisca" suave
         if (CONFIG.headerImageUrls.length > 1) {
             headerElement.style.setProperty("--header-bg-image-2", `url('${CONFIG.headerImageUrls[1]}')`);
-            
-            // Troca o fundo a cada 5 segundos
             setInterval(() => {
                 headerElement.classList.toggle("show-second-bg");
             }, 5000);
+        } else {
+            headerElement.classList.remove("show-second-bg");
+            headerElement.style.setProperty("--header-bg-image-2", "none");
         }
     }
 
-    // 2. Renderizar Categorias e Produtos
     const productListContainer = document.getElementById("product-list");
     const categoryMenuContainer = document.getElementById("category-menu");
 
@@ -163,7 +117,6 @@ document.addEventListener("DOMContentLoaded", () => {
             </article>
         `).join('');
 
-        // Recapturar eventos dos botões recém renderizados
         const orderButtons = document.querySelectorAll(".btn-order");
         orderButtons.forEach(button => {
             button.addEventListener("click", (e) => {
@@ -180,6 +133,39 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Lógica do Botão de Compartilhar
+    const btnShare = document.getElementById("btn-share");
+    if (btnShare) {
+        btnShare.addEventListener("click", async () => {
+            const shareData = {
+                title: `Cardápio | ${CONFIG.name}${CONFIG.nameHighlight}`,
+                text: `Dê uma olhada no cardápio de ${CONFIG.name}!`,
+                url: window.location.href
+            };
+
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                } else {
+                    await navigator.clipboard.writeText(window.location.href);
+                    
+                    // Feedback visual no ícone
+                    const originalColor = btnShare.style.color;
+                    btnShare.style.color = 'var(--accent)';
+                    btnShare.style.borderColor = 'var(--accent)';
+                    
+                    setTimeout(() => {
+                        btnShare.style.color = originalColor;
+                        btnShare.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    }, 2000);
+                }
+            } catch (err) {
+                console.log("Erro ao compartilhar:", err);
+            }
+        });
+    }
+
     renderCategories();
     renderProducts();
 });
+
