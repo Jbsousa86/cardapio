@@ -91,7 +91,7 @@ const STORES_DATA = {
             logoUrl: "https://tse3.mm.bing.net/th/id/OIP.hcZm1Ia-BjWejDvNTzOItgHaEw?pid=Api&P=0&h=180",
             headerImageUrls: [
                 "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-                "https://images.unsplash.com/photo-1589110281682-108bb6361a6b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                "https://images.pexels.com/photos/1092730/pexels-photo-1092730.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
             ],
             theme: {
                 primaryBg: "#12041d", // Roxo "Noite" Profundo
@@ -125,7 +125,7 @@ const STORES_DATA = {
                 name: "Barca Especial (Para Dois)",
                 description: "600g de açaí, 4 frutas, 3 cereais e bordinha de Nutella.",
                 price: 45.00,
-                image: "https://images.unsplash.com/photo-1594911776100-8430a6c6734c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                image: "https://i.pinimg.com/originals/56/92/cf/5692cfb07f6f1e86a2c873e945ff327e.jpg",
                 category: "Especiais"
             }
         ]
