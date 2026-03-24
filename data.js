@@ -68,7 +68,7 @@ const STORES_DATA = {
             theme: {
                 primaryBg: "#122721ff",
                 accent: "#17e408ff",
-                accentHover: "#085809ff"
+                accentHover: "#092b0aff"
             }
         },
         PRODUCTS: [
@@ -84,22 +84,50 @@ const STORES_DATA = {
     "acai": {
         CONFIG: {
             whatsappNumber: "5511888888888",
-            name: "Rei do",
+            name: "Império do",
             nameHighlight: "Açaí",
-            subtitle: "Refresque o seu dia com o melhor açaí!",
-            slogan: "Monte do seu jeito!",
+            subtitle: "O açaí mais cremoso e refrescante da cidade!",
+            slogan: "Aberto todos os dias: das 12h às 22h",
             logoUrl: "https://tse3.mm.bing.net/th/id/OIP.hcZm1Ia-BjWejDvNTzOItgHaEw?pid=Api&P=0&h=180",
             headerImageUrls: [
-                "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
+                "https://images.unsplash.com/photo-1594911776100-8430a6c6734c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
             ],
             theme: {
-                primaryBg: "#1e0b2e",
-                accent: "#8e44ad",
-                accentHover: "#732d91"
+                primaryBg: "#12041d", // Roxo "Noite" Profundo
+                accent: "#cc2b98",    // Magenta vibrante tipo açaí premium
+                accentHover: "#a01e74"
             }
         },
         PRODUCTS: [
-            { name: "Copo 500ml", description: "Açaí batido na hora.", price: 18.00, image: "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", category: "Copos" }
+            { 
+                name: "Copo Tradicional 300ml", 
+                description: "Açaí premium com banana, granola e mel.", 
+                price: 15.00, 
+                image: "https://tse3.mm.bing.net/th/id/OIP.h8U2iwO_IkuZL5YiHPjlbgHaHa?pid=Api&P=0&h=180", 
+                category: "Copos" 
+            },
+            { 
+                name: "Copo Turbo 500ml", 
+                description: "Leite em pó, morango, paçoca e cobertura de chocolate.", 
+                price: 22.00, 
+                image: "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", 
+                category: "Copos" 
+            },
+            { 
+                name: "Açaí no Quilo (Auto-Serviço)", 
+                description: "Escolha seus acompanhamentos e monte do seu jeito no balcão.", 
+                price: 18.00, 
+                image: "https://tse4.mm.bing.net/th/id/OIP.ySwJqa9OKrkE8MlOidjmZgHaJ3?pid=Api&P=0&h=180", 
+                category: "Self-Service" 
+            },
+            { 
+                name: "Barca Especial (Para Dois)", 
+                description: "600g de açaí, 4 frutas, 3 cereais e bordinha de Nutella.", 
+                price: 45.00, 
+                image: "https://tse1.mm.bing.net/th/id/OIP.G6N7y9XNAt0s3U8f_vVqPAHaHa?pid=Api&P=0&h=180", 
+                category: "Especiais" 
+            }
         ]
     }
 };
