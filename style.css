@@ -175,6 +175,22 @@ body {
     gap: 2rem;
 }
 
+/* Estado Vazio (Busca) */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+}
+.empty-state p {
+    font-size: 1.2rem;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+}
+.empty-state small {
+    font-size: 0.95rem;
+}
+
 /* Card Styles - Glassmorphism */
 .card {
     background: var(--card-bg);
@@ -368,6 +384,27 @@ body {
     gap: 1.5rem;
 }
 
+.search-container {
+    margin-bottom: 0.5rem;
+}
+
+#search-input {
+    width: 100%;
+    padding: 0.8rem 1.2rem;
+    border-radius: 50px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color var(--transition-speed);
+}
+
+#search-input:focus {
+    border-color: var(--accent);
+}
+
 .category-menu {
     display: flex;
     gap: 1rem;
@@ -445,4 +482,258 @@ body {
     /* Efeito de borda fina elegante */
     animation: float 4s ease-in-out infinite;
     /* Animação flutuante premium e super leve */
+}
+
+/* Promoção de Hoje */
+.promo-section .promo-card {
+    display:flex;
+    gap:1rem;
+    align-items:center;
+    background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(0,0,0,0.25));
+    padding:1rem;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.05);
+}
+
+.promo-section .promo-image {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.promo-section h2 { margin:0; font-size:1.2rem; }
+.promo-section .promo-content { display:flex; flex-direction:column; }
+.promo-section .small-muted { margin-top:0.25rem; color:var(--text-muted); }
+
+/* Hero CTA (grande e chamativo) */
+/* Product badge */
+
+/* Product badge */
+.card { position: relative; }
+.badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--accent);
+    color: white;
+    padding: 0.35rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight:700;
+    box-shadow: 0 6px 18px rgba(16,185,129,0.12);
+}
+
+/* --- Botão Voltar ao Topo --- */
+.back-to-top {
+    position: fixed;
+    bottom: 110px; /* Acima do botão do carrinho */
+    right: 30px;
+    background: var(--card-bg);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all var(--transition-speed) ease;
+    backdrop-filter: blur(5px);
+}
+.back-to-top.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+.back-to-top:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--accent); color: var(--accent); }
+
+/* --- Carrinho de Compras --- */
+.cart-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-speed) ease;
+}
+
+.cart-fab:hover { transform: scale(1.1); }
+
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ef4444; /* Vermelho chamativo */
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 800;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--primary-bg);
+}
+
+.cart-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cart-overlay.active { display: block; opacity: 1; }
+
+.cart-modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: var(--primary-bg);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--card-radius);
+    width: 90%;
+    max-width: 450px;
+    max-height: 80vh;
+    z-index: 1001;
+    display: none;
+    flex-direction: column;
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.cart-modal.active {
+    display: flex; opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Modal de Extras Específico */
+.extra-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+}
+.extra-option:hover {
+    background: rgba(0,0,0,0.4);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.cart-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+.btn-close { background: transparent; border: none; color: var(--text-muted); font-size: 2rem; cursor: pointer; line-height: 1; }
+.btn-close:hover { color: var(--text-main); }
+
+.cart-items { padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1rem; }
+.cart-item { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+.cart-item-info h4 { margin-bottom: 0.2rem; font-size: 1rem; }
+.cart-item-info p { color: var(--accent); font-weight: 600; font-size: 0.9rem; }
+
+.cart-controls { display: flex; align-items: center; gap: 0.8rem; }
+.cart-controls button {
+    background: rgba(255,255,255,0.1); border: none; color: white;
+    width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;
+}
+.cart-controls button:hover { background: rgba(255,255,255,0.2); }
+
+.cart-controls .btn-remove { background: rgba(239, 68, 68, 0.15); margin-left: 0.4rem; }
+.cart-controls .btn-remove:hover { background: rgba(239, 68, 68, 0.8); }
+
+.cart-footer { padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); }
+.cart-total { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: 800; margin-bottom: 1rem; }
+
+.btn-checkout {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+.btn-checkout:hover { background: var(--accent-hover); transform: scale(1.02); }
+
+.cart-select {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    border-radius: 8px;
+    padding: 0.8rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color var(--transition-speed);
+    cursor: pointer;
+}
+.cart-select:focus { border-color: var(--accent); }
+.cart-select option { background: var(--primary-bg); color: var(--text-main); }
+
+.cart-observations {
+    padding: 0 1.5rem 1rem 1.5rem;
+}
+
+#cart-notes {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    border-radius: 8px;
+    padding: 0.8rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: none;
+    outline: none;
+    transition: border-color var(--transition-speed);
+}
+
+#cart-notes:focus { border-color: var(--accent); }
+
+/* --- Estilos para Produtos Esgotados --- */
+.card.sold-out {
+    filter: grayscale(90%);
+    opacity: 0.7;
+}
+
+/* Mantém o efeito de levantar, mas sem a borda colorida */
+.card.sold-out:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Desativa o zoom na imagem para itens esgotados */
+.card.sold-out:hover .card-image {
+    transform: scale(1);
+}
+
+/* Estiliza o botão desabilitado e remove seus efeitos de hover */
+.btn-order:disabled,
+.btn-order:disabled:hover {
+    background: #64748b; /* Um cinza neutro */
+    color: #cbd5e1;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }

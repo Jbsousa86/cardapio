@@ -29,9 +29,28 @@
     </header>
 
     <main class="container">
+        <!-- Seção Promoção de Hoje (preenchida via script.js se disponível) -->
+        <section id="promo-section" class="promo-section" style="display:none; margin-bottom:1.5rem;">
+            <div class="promo-card">
+                <div class="promo-image-wrapper">
+                    <img id="promo-image" src="" alt="Promoção" class="promo-image" style="display:none; width:140px; height:140px; object-fit:cover; border-radius:12px;">
+                </div>
+                <div class="promo-content">
+                    <h2 id="promo-title"></h2>
+                    <p id="promo-desc" class="small-muted"></p>
+                    <div style="display:flex; gap:1rem; align-items:center; margin-top:0.6rem;">
+                        <div id="promo-price" style="font-weight:800;"></div>
+                        <button id="promo-order" class="btn-order">Aproveitar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
         <section class="menu-section">
             <div class="menu-header">
                 <h2 class="section-title">Nosso Cardápio</h2>
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Buscar produto...">
+                </div>
                 <nav id="category-menu" class="category-menu">
                     <!-- Categorias geradas automaticamente pelo script.js -->
                 </nav>
@@ -43,11 +62,75 @@
         </section>
     </main>
 
+    <!-- Botão de Voltar ao Topo -->
+    <button id="back-to-top" class="back-to-top" title="Voltar ao topo">
+        ↑
+    </button>
+
+    <!-- Botão Flutuante do Carrinho -->
+    <button id="cart-fab" class="cart-fab" style="display: none;">
+        🛒 <span id="cart-badge" class="cart-badge">0</span>
+    </button>
+
+    <!-- Modal de Extras/Adicionais -->
+    <div id="extras-overlay" class="cart-overlay"></div>
+    <div id="extras-modal" class="cart-modal">
+        <div class="cart-header">
+            <h2 id="extras-title">Adicionais</h2>
+            <button id="close-extras" class="btn-close">&times;</button>
+        </div>
+        <div id="extras-list" class="cart-items" style="gap: 0.5rem;"></div>
+        <div class="cart-footer"><button id="btn-confirm-extras" class="btn-checkout">Confirmar Adição</button></div>
+    </div>
+
+    <!-- Modal do Carrinho -->
+    <div id="cart-overlay" class="cart-overlay"></div>
+    <div id="cart-modal" class="cart-modal">
+        <div class="cart-header">
+            <h2>Seu Pedido</h2>
+            <button id="close-cart" class="btn-close">&times;</button>
+        </div>
+        <div id="cart-items" class="cart-items"></div>
+        <div class="cart-payment" style="padding: 0 1.5rem 1rem 1.5rem;">
+            <select id="cart-payment-method" class="cart-select">
+                <option value="">Forma de Pagamento...</option>
+                <option value="Pix">Pix</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                <option value="Cartão de Débito">Cartão de Débito</option>
+                <option value="Dinheiro">Dinheiro</option>
+            </select>
+        </div>
+        <div class="cart-observations">
+            <textarea id="cart-notes" placeholder="Endereço de entrega ou observações do pedido..." rows="2"></textarea>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total"><span>Total:</span> <span id="cart-total-price">R$ 0,00</span></div>
+            <button id="btn-checkout" class="btn-checkout">Finalizar Pedido 💬</button>
+        </div>
+    </div>
+
     <footer class="footer">
         <div class="container">
             <p>&copy; <span id="year"></span> jbstech.</p>
         </div>
     </footer>
+
+    <!-- Firebase SDK (Versão Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script>
+        // Suas credenciais traduzidas para a inicialização Compat
+        const firebaseConfig = {
+            apiKey: "AIzaSyABboRzNIklEJN7lwu7bA0JFhTa43QCgbU",
+            authDomain: "cardapio-8b24a.firebaseapp.com",
+            projectId: "cardapio-8b24a",
+            storageBucket: "cardapio-8b24a.firebasestorage.app",
+            messagingSenderId: "211578251149",
+            appId: "1:211578251149:web:6795281b760cedd99dbfc4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
 
     <script src="data.js"></script>
     <script src="script.js"></script>

@@ -86,6 +86,111 @@
             box-sizing: border-box;
             border: none;
         }
+        
+        /* Estilos da Lista de Produtos no Admin */
+        .products-list {
+            width: 100%;
+            margin-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: left;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 0.4rem;
+        }
+        
+        .products-list::-webkit-scrollbar { width: 6px; }
+        .products-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 4px; }
+        .products-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        .products-list::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        .product-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.6rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .product-info { 
+            display: flex; 
+            flex-direction: column; 
+            flex: 1;
+            min-width: 120px;
+        }
+        .product-price { color: var(--accent); font-weight: 600; font-size: 0.85rem; }
+        .btn-edit {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-edit:hover { background: var(--accent); }
+        
+        .product-actions { 
+            display: flex; 
+            gap: 0.4rem; 
+            flex-wrap: wrap; 
+        }
+        .btn-delete {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-delete:hover { background: #ef4444; }
+
+        .btn-availability {
+            border: none;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            font-weight: 600;
+            min-width: 85px; /* Evita que o layout mude de tamanho */
+            color: white;
+        }
+        .btn-availability.available {
+            background: var(--accent);
+        }
+        .btn-availability.available:hover { background: #059669; }
+        .btn-availability.sold-out {
+            background: #cc3a3a;
+        }
+        .btn-availability.sold-out:hover { background: #ef4444; }
+
+        .btn-add-product {
+            background: transparent;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+            width: 100%;
+            padding: 0.6rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+        .btn-add-product:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
 
         /* Estilos do Login */
         #login-overlay {
@@ -122,6 +227,9 @@
             text-align: center;
             box-sizing: border-box;
         }
+        
+        /* Estilo do Modal de Edição */
+        #edit-modal-overlay, #add-modal-overlay, #edit-store-modal-overlay, #add-store-modal-overlay, #category-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: none; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(8px); }
 
         #error-msg {
             color: #ef4444;
@@ -137,6 +245,16 @@
             width: 100%;
         }
     </style>
+    <style>
+        /* Estilos adicionais para o botão de Logout */
+        .btn-logout {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ef4444 !important;
+            max-width: 120px !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -145,10 +263,194 @@
         <div class="login-box">
             <div class="store-icon">🔐</div>
             <h2>Acesso Restrito</h2>
-            <p>Digite a senha administrativa</p>
-            <input type="password" id="admin-pass" placeholder="Senha">
+            <p>Use seu e-mail e senha para entrar</p>
+            <input type="email" id="admin-email" placeholder="E-mail" autocomplete="email">
+            <input type="password" id="admin-pass" placeholder="Senha" autocomplete="current-password">
             <button class="btn" onclick="checkAccess()">Entrar no Painel</button>
             <p id="error-msg">Senha incorreta!</p>
+        </div>
+    </div>
+    
+    <!-- Modal de Edição de Produto -->
+    <div id="edit-modal-overlay">
+        <div class="login-box" style="text-align: left; max-width: 400px;">
+            <h2 style="text-align: center; margin-top: 0; margin-bottom: 1.5rem;">Editar Produto</h2>
+            
+            <label for="edit-name" style="font-size: 0.9rem; color: #94a3b8;">Nome do Produto</label>
+            <input type="text" id="edit-name" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="edit-price" style="font-size: 0.9rem; color: #94a3b8;">Preço (R$)</label>
+            <input type="number" id="edit-price" step="0.01" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="edit-desc" style="font-size: 0.9rem; color: #94a3b8;">Descrição</label>
+            <textarea id="edit-desc" rows="3" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
+
+            <label for="edit-category" style="font-size: 0.9rem; color: #94a3b8;">Categoria</label>
+            <input type="text" id="edit-category" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="edit-extras" style="font-size: 0.9rem; color: #94a3b8;">Adicionais (Um por linha. Ex: Bacon | 3.50)</label>
+            <textarea id="edit-extras" rows="2" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
+
+            <label for="edit-image" style="font-size: 0.9rem; color: #94a3b8;">URL da Imagem (Opcional)</label>
+            <input type="text" id="edit-image" style="text-align: left; margin: 0.3rem 0 1.5rem 0;">
+
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn" style="background: #64748b;" onclick="closeEditModal()">Cancelar</button>
+                <button class="btn" onclick="saveProductEdit()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Adição de Produto -->
+    <div id="add-modal-overlay">
+        <div class="login-box" style="text-align: left; max-width: 400px;">
+            <h2 style="text-align: center; margin-top: 0; margin-bottom: 1.5rem;">Adicionar Produto</h2>
+            
+            <label for="add-name" style="font-size: 0.9rem; color: #94a3b8;">Nome do Produto</label>
+            <input type="text" id="add-name" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="add-price" style="font-size: 0.9rem; color: #94a3b8;">Preço (R$)</label>
+            <input type="number" id="add-price" step="0.01" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="add-desc" style="font-size: 0.9rem; color: #94a3b8;">Descrição</label>
+            <textarea id="add-desc" rows="3" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
+
+            <label for="add-category" style="font-size: 0.9rem; color: #94a3b8;">Categoria</label>
+            <input type="text" id="add-category" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="add-extras" style="font-size: 0.9rem; color: #94a3b8;">Adicionais (Um por linha. Ex: Nutella | 5.00)</label>
+            <textarea id="add-extras" rows="2" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
+
+            <label for="add-image" style="font-size: 0.9rem; color: #94a3b8;">URL da Imagem (Opcional)</label>
+            <input type="text" id="add-image" placeholder="https://exemplo.com/imagem.png" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn" style="background: #64748b;" onclick="closeAddModal()">Cancelar</button>
+                <button class="btn" onclick="saveNewProduct()">Adicionar Produto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição da Loja (Configurações) -->
+    <div id="edit-store-modal-overlay">
+        <div class="login-box" style="text-align: left; max-width: 400px; max-height: 90vh; overflow-y: auto;">
+            <h2 style="text-align: center; margin-top: 0; margin-bottom: 1.5rem;">Configurações da Loja</h2>
+            
+            <label for="store-name" style="font-size: 0.9rem; color: #94a3b8;">Nome da Loja</label>
+            <input type="text" id="store-name" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="store-icon-input" style="font-size: 0.9rem; color: #94a3b8;">Ícone (Emoji)</label>
+            <input type="text" id="store-icon-input" placeholder="Ex: 🍕" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="store-highlight" style="font-size: 0.9rem; color: #94a3b8;">Palavra em Destaque (Cor)</label>
+            <input type="text" id="store-highlight" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="store-whatsapp" style="font-size: 0.9rem; color: #94a3b8;">WhatsApp (Apenas Números)</label>
+            <input type="text" id="store-whatsapp" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="store-subtitle" style="font-size: 0.9rem; color: #94a3b8;">Subtítulo / Descrição Rápida</label>
+            <input type="text" id="store-subtitle" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="store-slogan" style="font-size: 0.9rem; color: #94a3b8;">Slogan / Horário de Func.</label>
+            <input type="text" id="store-slogan" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="store-logo" style="font-size: 0.9rem; color: #94a3b8;">URL da Logo</label>
+            <input type="text" id="store-logo" style="text-align: left; margin: 0.3rem 0 1.5rem 0;">
+
+            <h3 style="text-align: center; margin-top: 1rem; margin-bottom: 1rem; color: var(--accent); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">Imagens de Fundo (Cabeçalho)</h3>
+            <label for="store-header-bg-1" style="font-size: 0.9rem; color: #94a3b8;">Imagem 1 (URL)</label>
+            <input type="text" id="store-header-bg-1" placeholder="https://exemplo.com/fundo1.jpg" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            <label for="store-header-bg-2" style="font-size: 0.9rem; color: #94a3b8;">Imagem 2 (URL - Efeito Crossfade Opcional)</label>
+            <input type="text" id="store-header-bg-2" placeholder="https://exemplo.com/fundo2.jpg" style="text-align: left; margin: 0.3rem 0 1.5rem 0;">
+
+            <h3 style="text-align: center; margin-top: 1rem; margin-bottom: 1rem; color: var(--accent); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">Cores do Tema</h3>
+            
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <label for="store-theme-bg" style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem;">Fundo Principal</label>
+                    <input type="color" id="store-theme-bg" style="margin: 0; padding: 0; height: 45px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2);">
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <label for="store-theme-accent" style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem;">Destaque</label>
+                    <input type="color" id="store-theme-accent" style="margin: 0; padding: 0; height: 45px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2);">
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <label for="store-theme-hover" style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem;">Hover (Ação)</label>
+                    <input type="color" id="store-theme-hover" style="margin: 0; padding: 0; height: 45px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2);">
+                </div>
+            </div>
+
+            <h3 style="text-align: center; margin-top: 1rem; margin-bottom: 1rem; color: var(--accent); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">Promoção em Destaque (Opcional)</h3>
+            
+            <label for="promo-title" style="font-size: 0.9rem; color: #94a3b8;">Título da Promoção (Deixe em branco para remover)</label>
+            <input type="text" id="promo-title" placeholder="Ex: Combo de Lanches..." style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="promo-desc" style="font-size: 0.9rem; color: #94a3b8;">Descrição da Promoção</label>
+            <input type="text" id="promo-desc" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="promo-price" style="font-size: 0.9rem; color: #94a3b8;">Preço (R$)</label>
+            <input type="number" id="promo-price" step="0.01" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="promo-image" style="font-size: 0.9rem; color: #94a3b8;">URL da Imagem da Promo</label>
+            <input type="text" id="promo-image" style="text-align: left; margin: 0.3rem 0 1.5rem 0;">
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn" style="background: #64748b;" onclick="closeEditStoreModal()">Cancelar</button>
+                <button class="btn" onclick="saveStoreConfig()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Adição de Loja -->
+    <div id="add-store-modal-overlay">
+        <div class="login-box" style="text-align: left; max-width: 400px; max-height: 90vh; overflow-y: auto;">
+            <h2 style="text-align: center; margin-top: 0; margin-bottom: 1.5rem;">Adicionar Nova Loja</h2>
+            
+            <label for="new-store-key" style="font-size: 0.9rem; color: #94a3b8;">ID da Loja (ex: minha-loja)</label>
+            <input type="text" id="new-store-key" placeholder="sem espaços ou acentos" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="new-store-icon" style="font-size: 0.9rem; color: #94a3b8;">Ícone (Emoji)</label>
+            <input type="text" id="new-store-icon" placeholder="Ex: 🍕" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="new-store-name" style="font-size: 0.9rem; color: #94a3b8;">Nome da Loja</label>
+            <input type="text" id="new-store-name" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="new-store-highlight" style="font-size: 0.9rem; color: #94a3b8;">Palavra em Destaque</label>
+            <input type="text" id="new-store-highlight" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="new-store-whatsapp" style="font-size: 0.9rem; color: #94a3b8;">WhatsApp</label>
+            <input type="text" id="new-store-whatsapp" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="new-store-subtitle" style="font-size: 0.9rem; color: #94a3b8;">Subtítulo</label>
+            <input type="text" id="new-store-subtitle" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="new-store-slogan" style="font-size: 0.9rem; color: #94a3b8;">Slogan</label>
+            <input type="text" id="new-store-slogan" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+
+            <label for="new-store-logo" style="font-size: 0.9rem; color: #94a3b8;">URL da Logo</label>
+            <input type="text" id="new-store-logo" style="text-align: left; margin: 0.3rem 0 1.5rem 0;">
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn" style="background: #64748b;" onclick="closeAddStoreModal()">Cancelar</button>
+                <button class="btn" onclick="saveNewStore()">Criar Loja</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Gerenciamento de Categorias -->
+    <div id="category-modal-overlay">
+        <div class="login-box" style="text-align: left; max-width: 400px; max-height: 90vh; overflow-y: auto;">
+            <h2 style="text-align: center; margin-top: 0; margin-bottom: 1.5rem;">Gerenciar Categorias</h2>
+            <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 1rem; text-align: center;">Desmarque as categorias que você deseja ocultar temporariamente do cardápio.</p>
+            
+            <div id="category-list" style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem;">
+                <!-- Preenchido via JS -->
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn" style="background: #64748b;" onclick="closeCategoryModal()">Cancelar</button>
+                <button class="btn" onclick="saveCategories()">Salvar</button>
+            </div>
         </div>
     </div>
 
@@ -156,38 +458,127 @@
     <div id="main-content">
         <h1>Painel de Lojas</h1>
         <p>Acesse o cardápio de cada estabelecimento</p>
+        <button class="btn btn-logout" onclick="logout()">Sair 🚪</button>
 
+        <div style="display: flex; gap: 1rem; margin-bottom: 2rem; max-width: 900px; width: 100%; flex-wrap: wrap; justify-content: center;">
+            <button class="btn" onclick="openAddStoreModal()" style="max-width: 250px;">Adicionar Nova Loja ➕</button>
+            <button class="btn" style="background: #3b82f6; max-width: 220px;" onclick="exportData()">Exportar Backup 💾</button>
+            <label class="btn" style="background: #f59e0b; max-width: 220px; cursor: pointer; text-align: center; display: inline-block;">
+                Restaurar Backup 📂
+                <input type="file" accept=".json" style="display: none;" onchange="importData(event)">
+            </label>
+        </div>
         <div class="grid" id="store-grid">
             <!-- Gerado via JS -->
         </div>
     </div>
 
+    <!-- Firebase SDK (Versão Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script>
+        // Inicializa o Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyABboRzNIklEJN7lwu7bA0JFhTa43QCgbU",
+            authDomain: "cardapio-8b24a.firebaseapp.com",
+            projectId: "cardapio-8b24a",
+            storageBucket: "cardapio-8b24a.firebasestorage.app",
+            messagingSenderId: "211578251149",
+            appId: "1:211578251149:web:6795281b760cedd99dbfc4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+    </script>
+
     <script src="data.js"></script>
     <script>
-        const ADMIN_PASSWORD = "admin123";
+        let currentEditStoreKey = null;
+        let currentEditProductIndex = null;
+        let currentAddStoreKey = null;
+        let currentEditStoreConfigKey = null;
+        let currentCategoryStoreKey = null;
+
         const overlay = document.getElementById('login-overlay');
         const mainContent = document.getElementById('main-content');
         const errorMsg = document.getElementById('error-msg');
 
-        function checkSession() {
-            if (sessionStorage.getItem('isLoggedIn') === 'true') {
-                showContent();
-            }
-        }
-
-        function checkAccess() {
-            const pass = document.getElementById('admin-pass').value;
-            if (pass === ADMIN_PASSWORD) {
-                sessionStorage.setItem('isLoggedIn', 'true');
+        // Observador de Autenticação: A forma correta de gerenciar sessões
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Usuário está logado, mostra o conteúdo principal
                 showContent();
             } else {
+                // Usuário não está logado, garante que a tela de login seja exibida
+                overlay.style.display = 'flex';
+                mainContent.style.display = 'none';
+            }
+        });
+
+        // Funções para processar os textos de Adicionais
+        function parseExtras(text) {
+            if (!text) return [];
+            return text.split('\n').map(line => {
+                if (!line.trim()) return null;
+                const parts = line.split('|');
+                if (parts.length >= 2) {
+                    const priceStr = parts.pop().trim().replace(',', '.');
+                    const name = parts.join('|').trim();
+                    const price = parseFloat(priceStr);
+                    if (!isNaN(price)) return { name, price };
+                }
+                return null;
+            }).filter(e => e !== null);
+        }
+        function stringifyExtras(extras) {
+            if (!extras || !extras.length) return '';
+            return extras.map(e => `${e.name} | ${e.price.toFixed(2)}`).join('\n');
+        }
+
+        async function checkAccess() {
+            const email = document.getElementById('admin-email').value;
+            const pass = document.getElementById('admin-pass').value;
+            errorMsg.style.display = 'none'; // Esconde a mensagem de erro
+
+            try {
+                await auth.signInWithEmailAndPassword(email, pass);
+                // O onAuthStateChanged vai cuidar de mostrar o conteúdo
+            } catch (error) {
+                console.error("Erro de login:", error.message);
+                errorMsg.textContent = "E-mail ou senha inválidos.";
                 errorMsg.style.display = 'block';
             }
         }
 
-        function showContent() {
+        function logout() {
+            auth.signOut();
+            // O onAuthStateChanged vai cuidar de mostrar a tela de login
+        }
+
+        async function showContent() {
             overlay.style.display = 'none';
             mainContent.style.display = 'flex';
+            
+            try {
+                const snapshot = await db.collection('stores').get();
+                if (snapshot.empty) {
+                    // Banco Vazio! Primeira vez de uso: Sobe os dados locais pro Firebase.
+                    console.log("Banco vazio. Iniciando migração inicial para nuvem...");
+                    for (const key of Object.keys(STORES_DATA)) {
+                        await db.collection('stores').doc(key).set(STORES_DATA[key]);
+                    }
+                } else {
+                    // Atualiza a memória com as informações frescas da nuvem
+                    STORES_DATA = {};
+                    snapshot.forEach(doc => {
+                        STORES_DATA[doc.id] = doc.data();
+                    });
+                }
+            } catch (error) {
+                console.error("Erro ao conectar com Firebase. O Firestore está liberado para leitura?", error);
+            }
+
             renderStores();
         }
 
@@ -195,30 +586,390 @@
             const storeGrid = document.getElementById('store-grid');
             storeGrid.innerHTML = '';
 
-            const icons = {
-                'default': '🏠',
-                'pizzaria': '🍕',
-                'Imperio-do-Acai': '🍧'
-            };
-
             Object.keys(STORES_DATA).forEach(key => {
                 const store = STORES_DATA[key];
                 const name = `${store.CONFIG.name} ${store.CONFIG.nameHighlight}`;
-                const icon = icons[key] || '🛍️';
+                // Usa o ícone da configuração da loja, com um fallback
+                const icon = store.CONFIG.icon || '🛍️';
 
-                const card = document.createElement('a');
-                card.href = `index.html?s=${key}`;
+                const card = document.createElement('div');
                 card.className = 'store-card';
+                
+                // Gera a lista de produtos da loja
+                let productsHTML = '<div class="products-list"><strong style="margin-bottom: 0.5rem; display: block;">Produtos Cadastrados:</strong>';
+                store.PRODUCTS.forEach((p, index) => {
+                    productsHTML += `
+                        <div class="product-item">
+                            <div class="product-info">
+                                <span>${p.name}</span>
+                                <span class="product-price">R$ ${p.price.toFixed(2)}</span>
+                            </div>
+                            <div class="product-actions">
+                                <button 
+                                    class="btn-availability ${p.soldOut ? 'sold-out' : 'available'}" 
+                                    onclick="toggleAvailability('${key}', ${index})">
+                                    ${p.soldOut ? 'Esgotado' : 'Disponível'}
+                                </button>
+                                <button class="btn-edit" onclick="editProduct('${key}', ${index})" title="Editar Produto">✏️</button>
+                                <button class="btn-delete" onclick="deleteProduct('${key}', ${index})" title="Excluir Produto">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                productsHTML += `<button class="btn-add-product" onclick="addProduct('${key}')">Adicionar Novo Produto ➕</button>`;
+                productsHTML += '</div>';
+
                 card.innerHTML = `
                     <div class="store-icon">${icon}</div>
-                    <div class="store-name">${name}</div>
-                    <div class="btn">Abrir Cardápio</div>
+                    <div class="store-name" style="font-size: 1.3rem; font-weight: 800;">${name}</div>
+                    
+                    <div style="width: 100%; background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 8px; text-align: left; font-size: 0.85rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.4rem;">
+                        <div><strong style="color: white;">📞 WhatsApp:</strong> ${store.CONFIG.whatsappNumber || '-'}</div>
+                        <div><strong style="color: white;">📝 Subtítulo:</strong> ${store.CONFIG.subtitle || '-'}</div>
+                        <div><strong style="color: white;">🕒 Slogan:</strong> ${store.CONFIG.slogan || '-'}</div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem;">
+                        <button class="btn-edit" style="flex: 1; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem;" onclick="editStoreConfig('${key}')" title="Editar Informações da Loja">⚙️ Config.</button>
+                        <button class="btn-edit" style="flex: 1; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; background: #3b82f6;" onclick="manageCategories('${key}')" title="Gerenciar Categorias">📑 Categorias</button>
+                        <a href="index.html?s=${key}" class="btn" style="flex: 1; text-decoration: none; display: flex; justify-content: center; align-items: center; padding: 0.6rem; font-size: 0.85rem;">Cardápio ➔</a>
+                    </div>
+                    ${productsHTML}
                 `;
                 storeGrid.appendChild(card);
             });
         }
+        
+        function manageCategories(storeKey) {
+            currentCategoryStoreKey = storeKey;
+            const store = STORES_DATA[storeKey];
+            const hiddenCats = store.CONFIG.hiddenCategories || [];
+            const allCats = [...new Set(store.PRODUCTS.map(p => p.category))];
+            
+            const listDiv = document.getElementById('category-list');
+            listDiv.innerHTML = '';
+            
+            if (allCats.length === 0) {
+                listDiv.innerHTML = '<p style="color: #94a3b8; text-align: center;">Nenhuma categoria encontrada. Adicione produtos primeiro.</p>';
+            } else {
+                allCats.forEach(cat => {
+                    const isHidden = hiddenCats.includes(cat);
+                    listDiv.innerHTML += `
+                        <label style="display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer;">
+                            <input type="checkbox" value="${cat}" ${isHidden ? '' : 'checked'} style="width: 18px; height: 18px; accent-color: var(--accent); margin: 0;">
+                            <span style="flex: 1;">${cat}</span>
+                            ${isHidden ? '<span style="font-size: 0.7rem; color: #ef4444; border: 1px solid #ef4444; padding: 0.1rem 0.3rem; border-radius: 4px;">Oculta</span>' : '<span style="font-size: 0.7rem; color: var(--accent); border: 1px solid var(--accent); padding: 0.1rem 0.3rem; border-radius: 4px;">Visível</span>'}
+                        </label>
+                    `;
+                });
+            }
+            document.getElementById('category-modal-overlay').style.display = 'flex';
+        }
 
-        checkSession();
+        function closeCategoryModal() {
+            document.getElementById('category-modal-overlay').style.display = 'none';
+        }
+
+        function saveCategories() {
+            const checkboxes = document.querySelectorAll('#category-list input[type="checkbox"]');
+            const hiddenCats = Array.from(checkboxes).filter(cb => !cb.checked).map(cb => cb.value);
+            
+            STORES_DATA[currentCategoryStoreKey].CONFIG.hiddenCategories = hiddenCats;
+            db.collection('stores').doc(currentCategoryStoreKey).set(STORES_DATA[currentCategoryStoreKey]);
+            
+            closeCategoryModal();
+        }
+
+        function editStoreConfig(storeKey) {
+            currentEditStoreConfigKey = storeKey;
+            const config = STORES_DATA[storeKey].CONFIG;
+            
+            document.getElementById('store-name').value = config.name || '';
+            document.getElementById('store-icon-input').value = config.icon || '';
+            document.getElementById('store-highlight').value = config.nameHighlight || '';
+            document.getElementById('store-whatsapp').value = config.whatsappNumber || '';
+            document.getElementById('store-subtitle').value = config.subtitle || '';
+            document.getElementById('store-slogan').value = config.slogan || '';
+            document.getElementById('store-logo').value = config.logoUrl || '';
+
+            const headerImages = config.headerImageUrls || [];
+            document.getElementById('store-header-bg-1').value = headerImages[0] || '';
+            document.getElementById('store-header-bg-2').value = headerImages[1] || '';
+
+            const theme = config.theme || { primaryBg: "#100732", accent: "#10b981", accentHover: "#059669" };
+            document.getElementById('store-theme-bg').value = theme.primaryBg;
+            document.getElementById('store-theme-accent').value = theme.accent;
+            document.getElementById('store-theme-hover').value = theme.accentHover;
+
+            const promo = config.todayPromo || {};
+            document.getElementById('promo-title').value = promo.title || '';
+            document.getElementById('promo-desc').value = promo.description || '';
+            document.getElementById('promo-price').value = promo.price ? promo.price.toFixed(2) : '';
+            document.getElementById('promo-image').value = promo.image || '';
+
+            document.getElementById('edit-store-modal-overlay').style.display = 'flex';
+        }
+
+        function closeEditStoreModal() {
+            document.getElementById('edit-store-modal-overlay').style.display = 'none';
+        }
+
+        function saveStoreConfig() {
+            const config = STORES_DATA[currentEditStoreConfigKey].CONFIG;
+            config.name = document.getElementById('store-name').value.trim();
+            config.icon = document.getElementById('store-icon-input').value.trim();
+            config.nameHighlight = document.getElementById('store-highlight').value.trim();
+            config.whatsappNumber = document.getElementById('store-whatsapp').value.trim();
+            config.subtitle = document.getElementById('store-subtitle').value.trim();
+            config.slogan = document.getElementById('store-slogan').value.trim();
+            config.logoUrl = document.getElementById('store-logo').value.trim();
+
+            const bg1 = document.getElementById('store-header-bg-1').value.trim();
+            const bg2 = document.getElementById('store-header-bg-2').value.trim();
+            
+            const newHeaderImages = [];
+            if (bg1) newHeaderImages.push(bg1);
+            if (bg2) newHeaderImages.push(bg2);
+            config.headerImageUrls = newHeaderImages;
+
+            config.theme = {
+                primaryBg: document.getElementById('store-theme-bg').value,
+                accent: document.getElementById('store-theme-accent').value,
+                accentHover: document.getElementById('store-theme-hover').value
+            };
+
+            const promoTitle = document.getElementById('promo-title').value.trim();
+            const promoDesc = document.getElementById('promo-desc').value.trim();
+            const promoPrice = parseFloat(document.getElementById('promo-price').value);
+            const promoImage = document.getElementById('promo-image').value.trim();
+
+            if (promoTitle && !isNaN(promoPrice)) {
+                config.todayPromo = {
+                    title: promoTitle,
+                    description: promoDesc,
+                    price: promoPrice,
+                    image: promoImage || 'https://via.placeholder.com/140x140.png?text=Promo'
+                };
+            } else {
+                delete config.todayPromo;
+            }
+            
+            db.collection('stores').doc(currentEditStoreConfigKey).set(STORES_DATA[currentEditStoreConfigKey]);
+            closeEditStoreModal();
+            renderStores();
+        }
+
+        function openAddStoreModal() {
+            document.getElementById('new-store-key').value = '';
+            document.getElementById('new-store-icon').value = '';
+            document.getElementById('new-store-name').value = '';
+            document.getElementById('new-store-highlight').value = '';
+            document.getElementById('new-store-whatsapp').value = '';
+            document.getElementById('new-store-subtitle').value = '';
+            document.getElementById('new-store-slogan').value = '';
+            document.getElementById('new-store-logo').value = '';
+            document.getElementById('add-store-modal-overlay').style.display = 'flex';
+        }
+
+        function closeAddStoreModal() {
+            document.getElementById('add-store-modal-overlay').style.display = 'none';
+        }
+
+        function saveNewStore() {
+            const storeKey = document.getElementById('new-store-key').value.trim().toLowerCase();
+            const name = document.getElementById('new-store-name').value.trim();
+            const whatsappNumber = document.getElementById('new-store-whatsapp').value.trim();
+
+            if (!storeKey || !name || !whatsappNumber) {
+                alert('O ID, Nome e WhatsApp da loja são obrigatórios.');
+                return;
+            }
+            if (/\s/.test(storeKey)) {
+                alert('O ID da Loja não pode conter espaços.');
+                return;
+            }
+            if (STORES_DATA[storeKey]) {
+                alert(`O ID de loja "${storeKey}" já existe. Por favor, escolha outro.`);
+                return;
+            }
+
+            STORES_DATA[storeKey] = {
+                CONFIG: {
+                    whatsappNumber: whatsappNumber,
+                    icon: document.getElementById('new-store-icon').value.trim(),
+                    name: name,
+                    nameHighlight: document.getElementById('new-store-highlight').value.trim(),
+                    subtitle: document.getElementById('new-store-subtitle').value.trim(),
+                    slogan: document.getElementById('new-store-slogan').value.trim(),
+                    logoUrl: document.getElementById('new-store-logo').value.trim(),
+                    headerImageUrls: [],
+                    theme: { primaryBg: "#1e293b", accent: "#34d399", accentHover: "#10b981" }
+                },
+                PRODUCTS: []
+            };
+            
+            db.collection('stores').doc(storeKey).set(STORES_DATA[storeKey]);
+            closeAddStoreModal();
+            renderStores();
+        }
+
+        function editProduct(storeKey, productIndex) {
+            currentEditStoreKey = storeKey;
+            currentEditProductIndex = productIndex;
+            const product = STORES_DATA[storeKey].PRODUCTS[productIndex];
+            
+            // Preenche os campos do formulário
+            document.getElementById('edit-name').value = product.name;
+            document.getElementById('edit-price').value = product.price.toFixed(2);
+            document.getElementById('edit-desc').value = product.description;
+            document.getElementById('edit-category').value = product.category;
+            document.getElementById('edit-image').value = product.image;
+            document.getElementById('edit-extras').value = stringifyExtras(product.extras);
+            
+            // Exibe o modal
+            document.getElementById('edit-modal-overlay').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal-overlay').style.display = 'none';
+        }
+
+        function saveProductEdit() {
+            const newName = document.getElementById('edit-name').value.trim();
+            const newPrice = parseFloat(document.getElementById('edit-price').value);
+            const newDesc = document.getElementById('edit-desc').value.trim();
+            const newCategory = document.getElementById('edit-category').value.trim();
+            const newImage = document.getElementById('edit-image').value.trim();
+            const newExtras = parseExtras(document.getElementById('edit-extras').value);
+
+            if (!newName || isNaN(newPrice) || newPrice < 0 || !newDesc || !newCategory) {
+                alert("Por favor, preencha todos os campos obrigatórios (Nome, Preço, Descrição, Categoria).");
+                return;
+            }
+
+            STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].name = newName;
+            STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].price = newPrice;
+            STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].description = newDesc;
+            STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].category = newCategory;
+            STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].image = newImage || 'https://via.placeholder.com/320x220.png?text=Sem+Imagem';
+            STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].extras = newExtras;
+            
+            db.collection('stores').doc(currentEditStoreKey).set(STORES_DATA[currentEditStoreKey]);
+            
+            closeEditModal();
+            renderStores();
+        }
+
+        function addProduct(storeKey) {
+            currentAddStoreKey = storeKey;
+            
+            // Limpa os campos do formulário antes de abrir
+            document.getElementById('add-name').value = '';
+            document.getElementById('add-price').value = '';
+            document.getElementById('add-desc').value = '';
+            document.getElementById('add-category').value = '';
+            document.getElementById('add-image').value = '';
+            document.getElementById('add-extras').value = '';
+
+            // Exibe o modal
+            document.getElementById('add-modal-overlay').style.display = 'flex';
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal-overlay').style.display = 'none';
+        }
+
+        function saveNewProduct() {
+            const name = document.getElementById('add-name').value.trim();
+            const price = parseFloat(document.getElementById('add-price').value);
+            const description = document.getElementById('add-desc').value.trim();
+            const category = document.getElementById('add-category').value.trim();
+            const image = document.getElementById('add-image').value.trim();
+            const extras = parseExtras(document.getElementById('add-extras').value);
+
+            if (!name || isNaN(price) || price < 0 || !description || !category) {
+                alert("Por favor, preencha todos os campos obrigatórios: Nome, Preço, Descrição e Categoria.");
+                return;
+            }
+
+            const newProduct = { name, price, description, category, extras, image: image || 'https://via.placeholder.com/320x220.png?text=Sem+Imagem', soldOut: false };
+
+            STORES_DATA[currentAddStoreKey].PRODUCTS.push(newProduct);
+            
+            db.collection('stores').doc(currentAddStoreKey).set(STORES_DATA[currentAddStoreKey]);
+            
+            closeAddModal();
+            renderStores();
+        }
+
+        function deleteProduct(storeKey, productIndex) {
+            const product = STORES_DATA[storeKey].PRODUCTS[productIndex];
+            const confirmDelete = confirm(`Tem certeza que deseja excluir o produto "${product.name}"?`);
+            if (confirmDelete) {
+                // Remove o produto da lista e salva a alteração
+                STORES_DATA[storeKey].PRODUCTS.splice(productIndex, 1);
+                
+                db.collection('stores').doc(storeKey).set(STORES_DATA[storeKey]);
+                renderStores();
+            }
+        }
+
+        function toggleAvailability(storeKey, productIndex) {
+            const product = STORES_DATA[storeKey].PRODUCTS[productIndex];
+            // Inverte o status de 'soldOut'
+            product.soldOut = !product.soldOut;
+            
+            // Salva a alteração na nuvem em tempo real
+            db.collection('stores').doc(storeKey).set(STORES_DATA[storeKey]);
+            
+            // Re-renderiza a lista de lojas para refletir a mudança visualmente
+            renderStores();
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(STORES_DATA, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date().toISOString().split('T')[0];
+            a.download = `cardapio-backup-${date}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (typeof importedData === 'object' && importedData !== null) {
+                        if (confirm('Atenção: Isso substituirá TODOS os dados atuais pelas informações do arquivo de backup. Deseja continuar?')) {
+                            STORES_DATA = importedData;
+                            // Restaura todos os dados sobrescrevendo tudo no Firestore
+                            for (const key of Object.keys(STORES_DATA)) {
+                                db.collection('stores').doc(key).set(STORES_DATA[key]);
+                            }
+                            renderStores();
+                            alert('Backup restaurado com sucesso!');
+                        }
+                    } else {
+                        alert('O arquivo selecionado não parece ter o formato correto.');
+                    }
+                } catch (error) {
+                    alert('Erro ao ler o arquivo. Verifique se é um arquivo JSON válido.');
+                }
+                // Reseta o input para permitir selecionar o mesmo arquivo novamente
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
     </script>
 </body>
 </html>

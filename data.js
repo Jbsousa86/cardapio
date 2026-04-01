@@ -3,7 +3,7 @@
 // ==========================================
 // Adicione novas lojas aqui e elas aparecerão no Hub automaticamente!
 
-const STORES_DATA = {
+let STORES_DATA = {
     "default": {
         CONFIG: {
             whatsappNumber: "5563999756166",
@@ -20,6 +20,13 @@ const STORES_DATA = {
                 primaryBg: "#100732",
                 accent: "#17e01bff",
                 accentHover: "#122790ff"
+            },
+            // Promoção simples exibida no cardápio (opcional)
+            todayPromo: {
+                title: "Combo Hambúrguer + Refrigerante",
+                description: "Hambúrguer Clássico + Refrigerante 350ml por um preço especial.",
+                price: 28.00,
+                image: "./images/promo.png"
             }
         },
         PRODUCTS: [
