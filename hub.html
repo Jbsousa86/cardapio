@@ -596,28 +596,40 @@
             if (!currentUserEmail) return false;
 
             const currentEmail = normalizeEmail(currentUserEmail);
+            const storedEmail = normalizeEmail(localStorage.getItem('cardapio-principal-admin'));
+
+            if (storedEmail) {
+                currentUserIsPrincipalAdmin = storedEmail === currentEmail;
+                if (currentUserIsPrincipalAdmin) return true;
+            }
 
             try {
                 const settingsDoc = await db.collection('settings').doc('admin').get();
                 if (settingsDoc.exists) {
                     const primaryEmail = normalizeEmail(settingsDoc.data().primaryAdminEmail);
-                    currentUserIsPrincipalAdmin = primaryEmail === currentEmail;
-                    return currentUserIsPrincipalAdmin;
+                    if (primaryEmail) {
+                        localStorage.setItem('cardapio-principal-admin', primaryEmail);
+                        currentUserIsPrincipalAdmin = primaryEmail === currentEmail;
+                        return currentUserIsPrincipalAdmin;
+                    }
                 }
 
-                const storedEmail = normalizeEmail(localStorage.getItem('cardapio-principal-admin'));
-                if (storedEmail) {
-                    currentUserIsPrincipalAdmin = storedEmail === currentEmail;
-                    return currentUserIsPrincipalAdmin;
+                if (!storedEmail) {
+                    localStorage.setItem('cardapio-principal-admin', currentEmail);
+                    currentUserIsPrincipalAdmin = true;
+                    try {
+                        await db.collection('settings').doc('admin').set({ primaryAdminEmail: currentEmail });
+                    } catch (writeError) {
+                        console.warn('Não foi possível gravar o admin principal no Firestore, mas o acesso local foi preservado.', writeError);
+                    }
+                    return true;
                 }
 
-                await db.collection('settings').doc('admin').set({ primaryAdminEmail: currentEmail });
-                currentUserIsPrincipalAdmin = true;
-                return true;
+                return false;
             } catch (error) {
                 console.error('Erro ao validar admin principal:', error);
-                currentUserIsPrincipalAdmin = false;
-                return false;
+                currentUserIsPrincipalAdmin = storedEmail === currentEmail;
+                return currentUserIsPrincipalAdmin;
             }
         }
 
@@ -886,7 +898,7 @@
             document.getElementById('manage-admins-modal-overlay').style.display = 'none';
         }
 
-        function saveStoreAdmins() {
+        async function saveStoreAdmins() {
             if (!currentManageAdminStoreKey) return;
             const store = STORES_DATA[currentManageAdminStoreKey];
             const emails = document.getElementById('store-admin-emails').value
@@ -909,9 +921,15 @@
                 store.CONFIG.ownerEmail = currentUserEmail;
             }
 
-            db.collection('stores').doc(currentManageAdminStoreKey).set(STORES_DATA[currentManageAdminStoreKey]);
-            closeManageAdminsModal();
-            renderStores();
+            try {
+                await db.collection('stores').doc(currentManageAdminStoreKey).set(STORES_DATA[currentManageAdminStoreKey]);
+                closeManageAdminsModal();
+                renderStores();
+                alert('Acessos salvos com sucesso.');
+            } catch (error) {
+                console.error('Erro ao salvar acessos da loja:', error);
+                alert('Não foi possível salvar os acessos desta loja.');
+            }
         }
 
         function manageCategories(storeKey) {
