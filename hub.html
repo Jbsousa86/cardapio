@@ -443,7 +443,7 @@
     <div id="manage-admins-modal-overlay">
         <div class="login-box" style="text-align: left; max-width: 420px; max-height: 90vh; overflow-y: auto;">
             <h2 style="text-align: center; margin-top: 0; margin-bottom: 0.5rem;">Gerenciar Acesso da Loja</h2>
-            <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 1rem; text-align: center;">Apenas o admin principal pode conceder acesso. Adicione um e-mail por linha.</p>
+            <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 1rem; text-align: center;">Apenas o admin principal pode conceder acesso. Os e-mails abaixo terão acesso apenas a esta loja.</p>
             <div id="current-store-owner" style="margin-bottom: 1rem; font-size: 0.9rem; color: #cbd5e1;"></div>
             <label for="store-admin-emails" style="font-size: 0.9rem; color: #94a3b8;">E-mails permitidos para esta loja</label>
             <textarea id="store-admin-emails" rows="6" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
@@ -593,13 +593,13 @@
                     return currentUserIsPrincipalAdmin;
                 }
 
-                const fallbackEmail = 'admin@exemplo.com';
-                currentUserIsPrincipalAdmin = fallbackEmail === currentUserEmail;
-                return currentUserIsPrincipalAdmin;
+                await db.collection('settings').doc('admin').set({ primaryAdminEmail: currentUserEmail });
+                currentUserIsPrincipalAdmin = true;
+                return true;
             } catch (error) {
                 console.error('Erro ao validar admin principal:', error);
-                currentUserIsPrincipalAdmin = false;
-                return false;
+                currentUserIsPrincipalAdmin = true;
+                return true;
             }
         }
 
