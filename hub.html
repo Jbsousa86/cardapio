@@ -605,45 +605,11 @@
                 } catch (e) {}
                 return true;
             }
-            // -------------------------------
-            // -------------------------------
-
-
-            const storedEmail = normalizeEmail(localStorage.getItem('cardapio-principal-admin'));
-
-            if (storedEmail) {
-                currentUserIsPrincipalAdmin = storedEmail === currentEmail;
-                if (currentUserIsPrincipalAdmin) return true;
-            }
-
-            try {
-                const settingsDoc = await db.collection('settings').doc('admin').get();
-                if (settingsDoc.exists) {
-                    const primaryEmail = normalizeEmail(settingsDoc.data().primaryAdminEmail);
-                    if (primaryEmail) {
-                        localStorage.setItem('cardapio-principal-admin', primaryEmail);
-                        currentUserIsPrincipalAdmin = primaryEmail === currentEmail;
-                        return currentUserIsPrincipalAdmin;
-                    }
-                }
-
-                if (!storedEmail) {
-                    localStorage.setItem('cardapio-principal-admin', currentEmail);
-                    currentUserIsPrincipalAdmin = true;
-                    try {
-                        await db.collection('settings').doc('admin').set({ primaryAdminEmail: currentEmail });
-                    } catch (writeError) {
-                        console.warn('Não foi possível gravar o admin principal no Firestore, mas o acesso local foi preservado.', writeError);
-                    }
-                    return true;
-                }
-
-                return false;
-            } catch (error) {
-                console.error('Erro ao validar admin principal:', error);
-                currentUserIsPrincipalAdmin = storedEmail === currentEmail;
-                return currentUserIsPrincipalAdmin;
-            }
+            // --- FIM DA LÓGICA DE MASTER ADMIN ---
+            
+            // Qualquer outro email é tratado como lojista normal.
+            currentUserIsPrincipalAdmin = false;
+            return false;
         }
 
         function normalizeEmail(value) {
