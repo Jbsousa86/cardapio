@@ -207,6 +207,12 @@ class StoreTenantApp {
             // Adiciona a classe 'sold-out' se o produto estiver esgotado
             card.className = `card ${product.soldOut ? 'sold-out' : ''}`;
             
+            let displayPrice = this.formatCurrency(product.price);
+            if (product.variants && product.variants.length > 0) {
+                const minPrice = Math.min(...product.variants.map(v => v.price));
+                displayPrice = `<span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">A partir de</span><br>${this.formatCurrency(minPrice)}`;
+            }
+
             card.innerHTML = `
                 <div class="card-image-wrapper">
                     <img src="${product.image}" alt="${product.name}" class="card-image">
@@ -215,7 +221,7 @@ class StoreTenantApp {
                     <h3 class="card-title">${product.name}</h3>
                     <p class="card-description">${product.description}</p>
                     <div class="card-footer">
-                        <span class="price">${this.formatCurrency(product.price)}</span>
+                        <span class="price" style="line-height: 1.2;">${displayPrice}</span>
                         <button class="btn-order" ${product.soldOut ? 'disabled' : ''}>
                             ${product.soldOut ? 'Indisponível' : 'Adicionar 🛒'}
                         </button>
@@ -281,45 +287,87 @@ class StoreTenantApp {
         // Prevenção extra para não adicionar item esgotado
         if (product.soldOut) return;
 
-        // Se o produto tem opções extras, abre o modal de seleção primeiro
-        if (product.extras && product.extras.length > 0) {
+        const hasVariants = product.variants && product.variants.length > 0;
+        const hasExtras = product.extras && product.extras.length > 0;
+
+        if (hasVariants || hasExtras) {
             this.currentProductForExtras = product;
             document.getElementById('extras-title').textContent = product.name;
             
             const list = document.getElementById('extras-list');
             list.innerHTML = '';
-            product.extras.forEach((extra, index) => {
-                const div = document.createElement('label');
-                div.className = 'extra-option';
-                div.innerHTML = `
-                    <span style="display:flex; align-items:center; gap:10px;"><input type="checkbox" class="extra-checkbox" data-index="${index}" style="width:18px; height:18px; accent-color:var(--accent);"> ${extra.name}</span>
-                    <span class="price">+ ${this.formatCurrency(extra.price)}</span>
-                `;
-                list.appendChild(div);
-            });
+            
+            if (hasVariants) {
+                const variantHeader = document.createElement('strong');
+                variantHeader.style.display = 'block';
+                variantHeader.style.marginBottom = '10px';
+                variantHeader.textContent = 'Escolha o Tamanho/Peso (Obrigatório):';
+                list.appendChild(variantHeader);
+
+                product.variants.forEach((variant, index) => {
+                    const div = document.createElement('label');
+                    div.className = 'extra-option';
+                    div.innerHTML = `
+                        <span style="display:flex; align-items:center; gap:10px;"><input type="radio" name="variant-radio" class="variant-radio" data-index="${index}" style="width:18px; height:18px; accent-color:var(--accent);"> ${variant.name}</span>
+                        <span class="price">${this.formatCurrency(variant.price)}</span>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
+            if (hasExtras) {
+                const extraHeader = document.createElement('strong');
+                extraHeader.style.display = 'block';
+                extraHeader.style.marginTop = hasVariants ? '15px' : '0';
+                extraHeader.style.marginBottom = '10px';
+                extraHeader.textContent = 'Adicionais (Opcional):';
+                list.appendChild(extraHeader);
+
+                product.extras.forEach((extra, index) => {
+                    const div = document.createElement('label');
+                    div.className = 'extra-option';
+                    div.innerHTML = `
+                        <span style="display:flex; align-items:center; gap:10px;"><input type="checkbox" class="extra-checkbox" data-index="${index}" style="width:18px; height:18px; accent-color:var(--accent);"> ${extra.name}</span>
+                        <span class="price">+ ${this.formatCurrency(extra.price)}</span>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
             this.toggleExtrasModal(true);
         } else {
-            this.finalizeAddToCart(product, []);
+            this.finalizeAddToCart(product, null, []);
         }
     }
 
     confirmExtrasAndAdd() {
+        let selectedVariant = null;
+        if (this.currentProductForExtras.variants && this.currentProductForExtras.variants.length > 0) {
+            const checkedVariant = document.querySelector('.variant-radio:checked');
+            if (!checkedVariant) {
+                alert('Por favor, escolha uma das opções obrigatórias de tamanho/peso.');
+                return;
+            }
+            selectedVariant = this.currentProductForExtras.variants[checkedVariant.getAttribute('data-index')];
+        }
+
         const selectedExtras = [];
         const checkboxes = document.querySelectorAll('.extra-checkbox:checked');
         checkboxes.forEach(cb => {
             const index = cb.getAttribute('data-index');
             selectedExtras.push(this.currentProductForExtras.extras[index]);
         });
-        this.finalizeAddToCart(this.currentProductForExtras, selectedExtras);
+        this.finalizeAddToCart(this.currentProductForExtras, selectedVariant, selectedExtras);
         this.toggleExtrasModal(false);
     }
 
-    finalizeAddToCart(product, selectedExtras) {
+    finalizeAddToCart(product, selectedVariant, selectedExtras) {
         // Gera um ID único baseado no nome e nos extras escolhidos para não misturar pedidos diferentes do mesmo item
-        const cartItemId = product.name + JSON.stringify(selectedExtras);
+        const cartItemId = product.name + (selectedVariant ? selectedVariant.name : '') + JSON.stringify(selectedExtras);
         
         const cartItem = {
             ...product,
+            selectedVariant: selectedVariant,
             selectedExtras: selectedExtras,
             cartItemId: cartItemId
         };
@@ -365,11 +413,13 @@ class StoreTenantApp {
 
         this.cart.forEach(item => {
             // Soma o valor do item mais o valor de todos os extras selecionados
+            const basePrice = item.selectedVariant ? item.selectedVariant.price : item.price;
             const extrasTotal = item.selectedExtras ? item.selectedExtras.reduce((s, e) => s + e.price, 0) : 0;
-            const itemTotal = (item.price + extrasTotal) * item.quantity;
+            const itemTotal = (basePrice + extrasTotal) * item.quantity;
             totalPrice += itemTotal;
 
             // Exibe de forma sutil os adicionais escolhidos abaixo do nome no carrinho
+            const variantText = item.selectedVariant ? ` <span style="color:var(--accent); font-size:0.8rem;">(${item.selectedVariant.name})</span>` : '';
             const extrasText = item.selectedExtras && item.selectedExtras.length > 0 
                 ? `<small style="color:var(--text-muted); display:block; margin-top:3px;">+ ${item.selectedExtras.map(e => e.name).join(', ')}</small>` 
                 : '';
@@ -377,7 +427,7 @@ class StoreTenantApp {
             const itemEl = document.createElement('div');
             itemEl.className = 'cart-item';
             itemEl.innerHTML = `
-                <div class="cart-item-info"><h4>${item.name}</h4>${extrasText}<p style="margin-top:0.2rem;">${this.formatCurrency(itemTotal)}</p></div>
+                <div class="cart-item-info"><h4>${item.name}${variantText}</h4>${extrasText}<p style="margin-top:0.2rem;">${this.formatCurrency(itemTotal)}</p></div>
                 <div class="cart-controls">
                     <button class="btn-minus">-</button> <span>${item.quantity}</span> <button class="btn-plus">+</button>
                     <button class="btn-remove" title="Remover item">🗑️</button>
@@ -397,10 +447,12 @@ class StoreTenantApp {
         let total = 0;
         
         this.cart.forEach(item => {
+            const basePrice = item.selectedVariant ? item.selectedVariant.price : item.price;
             const extrasTotal = item.selectedExtras ? item.selectedExtras.reduce((s, e) => s + e.price, 0) : 0;
-            const itemTotal = (item.price + extrasTotal) * item.quantity;
+            const itemTotal = (basePrice + extrasTotal) * item.quantity;
             total += itemTotal;
-            message += `*${item.quantity}x* ${item.name} - ${this.formatCurrency(itemTotal)}\n`;
+            const variantText = item.selectedVariant ? ` (${item.selectedVariant.name})` : '';
+            message += `*${item.quantity}x* ${item.name}${variantText} - ${this.formatCurrency(itemTotal)}\n`;
             if (item.selectedExtras && item.selectedExtras.length > 0) {
                 message += `  ↳ *Adicionais:* ${item.selectedExtras.map(e => e.name).join(', ')}\n`;
             }

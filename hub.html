@@ -291,6 +291,9 @@
             <input type="text" id="edit-category" style="text-align: left; margin: 0.3rem 0 0.5rem 0;">
             <div id="edit-category-chips" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;"></div>
 
+            <label for="edit-variants" style="font-size: 0.9rem; color: #94a3b8;">Variações (Escolha Obrigatória. Ex: 300g | 15.00)</label>
+            <textarea id="edit-variants" rows="2" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
+
             <label for="edit-extras" style="font-size: 0.9rem; color: #94a3b8;">Adicionais (Um por linha. Ex: Bacon | 3.50)</label>
             <textarea id="edit-extras" rows="2" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
 
@@ -321,6 +324,9 @@
             <label for="add-category" style="font-size: 0.9rem; color: #94a3b8;">Categoria</label>
             <input type="text" id="add-category" style="text-align: left; margin: 0.3rem 0 0.5rem 0;">
             <div id="add-category-chips" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;"></div>
+
+            <label for="add-variants" style="font-size: 0.9rem; color: #94a3b8;">Variações (Escolha Obrigatória. Ex: 300g | 15.00)</label>
+            <textarea id="add-variants" rows="2" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
 
             <label for="add-extras" style="font-size: 0.9rem; color: #94a3b8;">Adicionais (Um por linha. Ex: Nutella | 5.00)</label>
             <textarea id="add-extras" rows="2" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
@@ -1189,7 +1195,8 @@
             document.getElementById('edit-desc').value = product.description;
             document.getElementById('edit-category').value = product.category;
             document.getElementById('edit-image').value = product.image;
-            document.getElementById('edit-extras').value = stringifyExtras(product.extras);
+            document.getElementById('edit-variants').value = stringifyExtras(product.variants || []);
+            document.getElementById('edit-extras').value = stringifyExtras(product.extras || []);
             
             // Exibe o modal
             document.getElementById('edit-modal-overlay').style.display = 'flex';
@@ -1210,6 +1217,7 @@
             const newDesc = document.getElementById('edit-desc').value.trim();
             const newCategory = document.getElementById('edit-category').value.trim();
             const newImage = document.getElementById('edit-image').value.trim();
+            const newVariants = parseExtras(document.getElementById('edit-variants').value);
             const newExtras = parseExtras(document.getElementById('edit-extras').value);
 
             if (!newName || isNaN(newPrice) || newPrice < 0 || !newDesc || !newCategory) {
@@ -1222,6 +1230,7 @@
             STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].description = newDesc;
             STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].category = newCategory;
             STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].image = newImage || 'https://via.placeholder.com/320x220.png?text=Sem+Imagem';
+            STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].variants = newVariants;
             STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].extras = newExtras;
             
             db.collection('stores').doc(currentEditStoreKey).set(STORES_DATA[currentEditStoreKey]);
@@ -1245,6 +1254,7 @@
             document.getElementById('add-desc').value = '';
             document.getElementById('add-category').value = '';
             document.getElementById('add-image').value = '';
+            document.getElementById('add-variants').value = '';
             document.getElementById('add-extras').value = '';
 
             // Exibe o modal
@@ -1266,6 +1276,7 @@
             const description = document.getElementById('add-desc').value.trim();
             const category = document.getElementById('add-category').value.trim();
             const image = document.getElementById('add-image').value.trim();
+            const variants = parseExtras(document.getElementById('add-variants').value);
             const extras = parseExtras(document.getElementById('add-extras').value);
 
             if (!name || isNaN(price) || price < 0 || !description || !category) {
@@ -1273,7 +1284,7 @@
                 return;
             }
 
-            const newProduct = { name, price, description, category, extras, image: image || 'https://via.placeholder.com/320x220.png?text=Sem+Imagem', soldOut: false };
+            const newProduct = { name, price, description, category, variants, extras, image: image || 'https://via.placeholder.com/320x220.png?text=Sem+Imagem', soldOut: false };
 
             STORES_DATA[currentAddStoreKey].PRODUCTS.push(newProduct);
             
