@@ -644,6 +644,10 @@
                 return { products: false, categories: false, config: false, admins: false };
             }
 
+            if (currentUserIsPrincipalAdmin) {
+                return { products: true, categories: true, config: true, admins: true };
+            }
+
             const currentEmail = normalizeEmail(currentUserEmail);
             const ownerEmail = normalizeEmail(store.CONFIG?.ownerEmail);
             if (ownerEmail === currentEmail) {
