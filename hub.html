@@ -607,24 +607,8 @@
                 return true;
             }
             // -------------------------------
+            // -------------------------------
 
-            // --- LÓGICA DE RECUPERAÇÃO DE ADMIN ---
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('forceAdmin') === 'true') {
-                localStorage.setItem('cardapio-principal-admin', currentEmail);
-                currentUserIsPrincipalAdmin = true;
-                try {
-                    await db.collection('settings').doc('admin').set({ primaryAdminEmail: currentEmail });
-                    alert('Super Admin redefinido com sucesso para: ' + currentEmail);
-                    // Remove o parâmetro da URL para não ficar forçando sempre
-                    const newUrl = window.location.pathname;
-                    window.history.replaceState({}, document.title, newUrl);
-                } catch (e) {
-                    console.error('Erro ao forçar admin:', e);
-                }
-                return true;
-            }
-            // --------------------------------------
 
             const storedEmail = normalizeEmail(localStorage.getItem('cardapio-principal-admin'));
 
