@@ -487,8 +487,8 @@
 
     <!-- Conteúdo Principal -->
     <div id="main-content">
-        <h1>Painel de Lojas</h1>
-        <p>Acesse o cardápio de cada estabelecimento</p>
+        <h1 id="main-title">Painel de Lojas</h1>
+        <p id="main-desc">Acesse o cardápio de cada estabelecimento</p>
         <button class="btn btn-logout" onclick="logout()">Sair 🚪</button>
 
         <div id="admin-actions" style="display: flex; gap: 1rem; margin-bottom: 2rem; max-width: 900px; width: 100%; flex-wrap: wrap; justify-content: center;">
@@ -699,6 +699,18 @@
             const adminActions = document.getElementById('admin-actions');
             if (adminActions) {
                 adminActions.style.display = currentUserIsPrincipalAdmin ? 'flex' : 'none';
+            }
+
+            const mainTitle = document.getElementById('main-title');
+            const mainDesc = document.getElementById('main-desc');
+            if (mainTitle && mainDesc) {
+                if (currentUserIsPrincipalAdmin) {
+                    mainTitle.textContent = 'Painel de Lojas';
+                    mainDesc.textContent = 'Acesse o cardápio de cada estabelecimento';
+                } else {
+                    mainTitle.textContent = 'Minha Loja';
+                    mainDesc.textContent = 'Gerencie o cardápio do seu estabelecimento';
+                }
             }
 
             const accessibleStores = Object.entries(STORES_DATA).filter(([_, store]) => canManageStore(store));
