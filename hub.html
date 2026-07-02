@@ -994,59 +994,59 @@
         }
 
         async function saveStoreConfig() {
-            if (!canManageStore(STORES_DATA[currentEditStoreConfigKey], 'config')) {
-                alert('Você não tem permissão para editar as configurações desta loja.');
-                return;
-            }
-
-            const config = STORES_DATA[currentEditStoreConfigKey].CONFIG;
-            config.name = document.getElementById('store-name').value.trim();
-            config.icon = document.getElementById('store-icon-input').value.trim();
-            config.nameHighlight = document.getElementById('store-highlight').value.trim();
-            config.whatsappNumber = document.getElementById('store-whatsapp').value.trim();
-            config.subtitle = document.getElementById('store-subtitle').value.trim();
-            config.slogan = document.getElementById('store-slogan').value.trim();
-            config.logoUrl = document.getElementById('store-logo').value.trim();
-
-            const bg1 = document.getElementById('store-header-bg-1').value.trim();
-            const bg2 = document.getElementById('store-header-bg-2').value.trim();
-            
-            const newHeaderImages = [];
-            if (bg1) newHeaderImages.push(bg1);
-            if (bg2) newHeaderImages.push(bg2);
-            config.headerImageUrls = newHeaderImages;
-
-            config.themeMode = document.getElementById('store-theme-mode').value;
-            config.theme = {
-                primaryBg: document.getElementById('store-theme-bg').value,
-                accent: document.getElementById('store-theme-accent').value,
-                accentHover: document.getElementById('store-theme-hover').value
-            };
-
-            const promoTitle = document.getElementById('promo-title').value.trim();
-            const promoDesc = document.getElementById('promo-desc').value.trim();
-            const promoPrice = parseFloat(document.getElementById('promo-price').value);
-            const promoImage = document.getElementById('promo-image').value.trim();
-
-            if (promoTitle && !isNaN(promoPrice)) {
-                config.todayPromo = {
-                    title: promoTitle,
-                    description: promoDesc,
-                    price: promoPrice,
-                    image: promoImage || 'https://via.placeholder.com/140x140.png?text=Promo'
-                };
-            } else {
-                delete config.todayPromo;
-            }
-            
             try {
+                if (!canManageStore(STORES_DATA[currentEditStoreConfigKey], 'config')) {
+                    alert('Você não tem permissão para editar as configurações desta loja.');
+                    return;
+                }
+
+                const config = STORES_DATA[currentEditStoreConfigKey].CONFIG;
+                config.name = document.getElementById('store-name').value.trim();
+                config.icon = document.getElementById('store-icon-input').value.trim();
+                config.nameHighlight = document.getElementById('store-highlight').value.trim();
+                config.whatsappNumber = document.getElementById('store-whatsapp').value.trim();
+                config.subtitle = document.getElementById('store-subtitle').value.trim();
+                config.slogan = document.getElementById('store-slogan').value.trim();
+                config.logoUrl = document.getElementById('store-logo').value.trim();
+
+                const bg1 = document.getElementById('store-header-bg-1').value.trim();
+                const bg2 = document.getElementById('store-header-bg-2').value.trim();
+                
+                const newHeaderImages = [];
+                if (bg1) newHeaderImages.push(bg1);
+                if (bg2) newHeaderImages.push(bg2);
+                config.headerImageUrls = newHeaderImages;
+
+                config.themeMode = document.getElementById('store-theme-mode').value;
+                config.theme = {
+                    primaryBg: document.getElementById('store-theme-bg').value,
+                    accent: document.getElementById('store-theme-accent').value,
+                    accentHover: document.getElementById('store-theme-hover').value
+                };
+
+                const promoTitle = document.getElementById('promo-title').value.trim();
+                const promoDesc = document.getElementById('promo-desc').value.trim();
+                const promoPrice = parseFloat(document.getElementById('promo-price').value);
+                const promoImage = document.getElementById('promo-image').value.trim();
+
+                if (promoTitle && !isNaN(promoPrice)) {
+                    config.todayPromo = {
+                        title: promoTitle,
+                        description: promoDesc,
+                        price: promoPrice,
+                        image: promoImage || 'https://via.placeholder.com/140x140.png?text=Promo'
+                    };
+                } else {
+                    delete config.todayPromo;
+                }
+                
                 await db.collection('stores').doc(currentEditStoreConfigKey).set(STORES_DATA[currentEditStoreConfigKey]);
                 closeEditStoreModal();
                 renderStores();
                 alert('Configurações da loja salvas com sucesso.');
             } catch (error) {
-                console.error('Erro ao salvar configurações da loja:', error);
-                alert('Erro ao salvar as configurações.');
+                console.error('Erro geral ao salvar configurações da loja:', error);
+                alert('Erro ao salvar: ' + (error.message || error));
             }
         }
 
