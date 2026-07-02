@@ -459,7 +459,6 @@
                 <label style="display: flex; align-items: center; gap: 0.6rem; color: #e2e8f0; font-size: 0.95rem;"><input type="checkbox" id="admin-perm-products"> Gerenciar produtos</label>
                 <label style="display: flex; align-items: center; gap: 0.6rem; color: #e2e8f0; font-size: 0.95rem;"><input type="checkbox" id="admin-perm-categories"> Gerenciar categorias</label>
                 <label style="display: flex; align-items: center; gap: 0.6rem; color: #e2e8f0; font-size: 0.95rem;"><input type="checkbox" id="admin-perm-config"> Editar configurações da loja</label>
-                <label style="display: flex; align-items: center; gap: 0.6rem; color: #e2e8f0; font-size: 0.95rem;"><input type="checkbox" id="admin-perm-admins"> Gerenciar outros admins</label>
             </div>
 
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">
@@ -653,31 +652,30 @@
 
         function getAdminPermissions(entry) {
             if (typeof entry === 'string') {
-                return { products: true, categories: true, config: true, admins: false };
+                return { products: true, categories: true, config: true };
             }
 
             const permissions = entry?.permissions || {};
             return {
                 products: !!permissions.products,
                 categories: !!permissions.categories,
-                config: !!permissions.config,
-                admins: !!permissions.admins
+                config: !!permissions.config
             };
         }
 
         function getStoreAdminPermissions(store) {
             if (!store || !currentUserEmail) {
-                return { products: false, categories: false, config: false, admins: false };
+                return { products: false, categories: false, config: false };
             }
 
             if (currentUserIsPrincipalAdmin) {
-                return { products: true, categories: true, config: true, admins: true };
+                return { products: true, categories: true, config: true };
             }
 
             const currentEmail = normalizeEmail(currentUserEmail);
             const ownerEmail = normalizeEmail(store.CONFIG?.ownerEmail);
             if (ownerEmail === currentEmail) {
-                return { products: true, categories: true, config: true, admins: true };
+                return { products: true, categories: true, config: true };
             }
 
             const adminEntry = (store.CONFIG?.admins || []).find(entry => {
@@ -687,7 +685,7 @@
                 return normalizeEmail(entry?.email) === currentEmail;
             });
 
-            return adminEntry ? getAdminPermissions(adminEntry) : { products: false, categories: false, config: false, admins: false };
+            return adminEntry ? getAdminPermissions(adminEntry) : { products: false, categories: false, config: false };
         }
 
         function canManageStore(store, permission = 'any') {
@@ -698,8 +696,7 @@
             if (permission === 'products') return permissions.products;
             if (permission === 'categories') return permissions.categories;
             if (permission === 'config') return permissions.config;
-            if (permission === 'admins') return permissions.admins;
-            return permissions.products || permissions.categories || permissions.config || permissions.admins;
+            return permissions.products || permissions.categories || permissions.config;
         }
 
         function getAssignedStoreKey(stores) {
@@ -909,7 +906,6 @@
             document.getElementById('admin-perm-products').checked = !!existingPermissions.products;
             document.getElementById('admin-perm-categories').checked = !!existingPermissions.categories;
             document.getElementById('admin-perm-config').checked = !!existingPermissions.config;
-            document.getElementById('admin-perm-admins').checked = !!existingPermissions.admins;
             document.getElementById('manage-admins-modal-overlay').style.display = 'flex';
         }
 
@@ -927,14 +923,13 @@
             const permissions = {
                 products: document.getElementById('admin-perm-products').checked,
                 categories: document.getElementById('admin-perm-categories').checked,
-                config: document.getElementById('admin-perm-config').checked,
-                admins: document.getElementById('admin-perm-admins').checked
+                config: document.getElementById('admin-perm-config').checked
             };
 
             store.CONFIG.admins = [...new Set(emails)].map(email => ({
                 email,
                 permissions
-            })).filter(entry => entry.permissions.products || entry.permissions.categories || entry.permissions.config || entry.permissions.admins);
+            })).filter(entry => entry.permissions.products || entry.permissions.categories || entry.permissions.config);
 
             if (!store.CONFIG.ownerEmail && currentUserEmail) {
                 store.CONFIG.ownerEmail = currentUserEmail;
