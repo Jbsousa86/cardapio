@@ -639,10 +639,6 @@
             }
 
             const currentEmail = normalizeEmail(currentUserEmail);
-            const ownerEmail = normalizeEmail(store.CONFIG?.ownerEmail);
-            if (ownerEmail === currentEmail) {
-                return { products: true, categories: true, config: true };
-            }
 
             const adminEntry = (store.CONFIG?.admins || []).find(entry => {
                 if (typeof entry === 'string') {
