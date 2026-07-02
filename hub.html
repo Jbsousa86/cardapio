@@ -993,7 +993,7 @@
             document.getElementById('edit-store-modal-overlay').style.display = 'none';
         }
 
-        function saveStoreConfig() {
+        async function saveStoreConfig() {
             if (!canManageStore(STORES_DATA[currentEditStoreConfigKey], 'config')) {
                 alert('Você não tem permissão para editar as configurações desta loja.');
                 return;
@@ -1039,9 +1039,15 @@
                 delete config.todayPromo;
             }
             
-            db.collection('stores').doc(currentEditStoreConfigKey).set(STORES_DATA[currentEditStoreConfigKey]);
-            closeEditStoreModal();
-            renderStores();
+            try {
+                await db.collection('stores').doc(currentEditStoreConfigKey).set(STORES_DATA[currentEditStoreConfigKey]);
+                closeEditStoreModal();
+                renderStores();
+                alert('Configurações da loja salvas com sucesso.');
+            } catch (error) {
+                console.error('Erro ao salvar configurações da loja:', error);
+                alert('Erro ao salvar as configurações.');
+            }
         }
 
         function openAddStoreModal() {
