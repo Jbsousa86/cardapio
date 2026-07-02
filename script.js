@@ -13,12 +13,15 @@ class StoreTenantApp {
         this.categories = ['Todos', ...new Set(this.products.map(p => p.category))];
         this.currentCategory = 'Todos';
         this.searchQuery = '';
-        this.isLightTheme = false;
+        this.isLightTheme = this.config.themeMode === 'light';
 
         try {
-            this.isLightTheme = localStorage.getItem('cardapio-theme') === 'light';
+            const savedTheme = localStorage.getItem(`cardapio-theme-${this.storeKey}`);
+            if (savedTheme === 'light' || savedTheme === 'dark') {
+                this.isLightTheme = savedTheme === 'light';
+            }
         } catch (error) {
-            this.isLightTheme = false;
+            this.isLightTheme = this.config.themeMode === 'light';
         }
         
         this.cart = []; // Nosso estado do carrinho
@@ -61,18 +64,35 @@ class StoreTenantApp {
         }
     }
 
+    async persistThemeToFirestore() {
+        if (typeof db === 'undefined' || !this.storeKey) return;
+
+        this.config.themeMode = this.isLightTheme ? 'light' : 'dark';
+
+        try {
+            await db.collection('stores').doc(this.storeKey).set({
+                CONFIG: {
+                    themeMode: this.config.themeMode
+                }
+            }, { merge: true });
+        } catch (error) {
+            console.error('Erro ao salvar tema no Firestore:', error);
+        }
+    }
+
     setupThemeToggle() {
         const toggle = document.getElementById('theme-toggle');
         if (!toggle) return;
 
-        toggle.addEventListener('click', () => {
+        toggle.addEventListener('click', async () => {
             this.isLightTheme = !this.isLightTheme;
             try {
-                localStorage.setItem('cardapio-theme', this.isLightTheme ? 'light' : 'dark');
+                localStorage.setItem(`cardapio-theme-${this.storeKey}`, this.isLightTheme ? 'light' : 'dark');
             } catch (error) {
                 // Ignora falhas de armazenamento local
             }
             this.applyTheme();
+            await this.persistThemeToFirestore();
         });
     }
 

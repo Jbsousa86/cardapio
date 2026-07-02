@@ -365,6 +365,13 @@
             <label for="store-header-bg-2" style="font-size: 0.9rem; color: #94a3b8;">Imagem 2 (URL - Efeito Crossfade Opcional)</label>
             <input type="text" id="store-header-bg-2" placeholder="https://exemplo.com/fundo2.jpg" style="text-align: left; margin: 0.3rem 0 1.5rem 0;">
 
+            <h3 style="text-align: center; margin-top: 1rem; margin-bottom: 1rem; color: var(--accent); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">Tema do Cardápio</h3>
+            <label for="store-theme-mode" style="font-size: 0.9rem; color: #94a3b8;">Escolha o tema visual do cardápio</label>
+            <select id="store-theme-mode" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box;">
+                <option value="dark">Escuro</option>
+                <option value="light">Claro</option>
+            </select>
+
             <h3 style="text-align: center; margin-top: 1rem; margin-bottom: 1rem; color: var(--accent); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">Cores do Tema</h3>
             
             <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
@@ -519,6 +526,7 @@
         let currentManageAdminStoreKey = null;
         let currentUserEmail = '';
         let currentUserIsPrincipalAdmin = false;
+        let currentUserAssignedStoreKey = null;
 
         const overlay = document.getElementById('login-overlay');
         const mainContent = document.getElementById('main-content');
@@ -614,6 +622,13 @@
             return admins.includes(currentUserEmail);
         }
 
+        function getAssignedStoreKey(stores) {
+            if (!currentUserEmail || currentUserIsPrincipalAdmin) return null;
+
+            const matchingStore = Object.entries(stores).find(([_, store]) => canManageStore(store));
+            return matchingStore ? matchingStore[0] : null;
+        }
+
         async function showContent() {
             overlay.style.display = 'none';
             mainContent.style.display = 'flex';
@@ -642,10 +657,21 @@
         }
 
         function renderStores() {
+            const accessibleStores = Object.entries(STORES_DATA).filter(([_, store]) => canManageStore(store));
+
+            if (!currentUserIsPrincipalAdmin && accessibleStores.length === 1) {
+                currentUserAssignedStoreKey = accessibleStores[0][0];
+                renderStoreDetail(currentUserAssignedStoreKey);
+                return;
+            }
+
+            currentUserAssignedStoreKey = null;
+            renderStoreList(accessibleStores);
+        }
+
+        function renderStoreList(accessibleStores) {
             const storeGrid = document.getElementById('store-grid');
             storeGrid.innerHTML = '';
-
-            const accessibleStores = Object.entries(STORES_DATA).filter(([_, store]) => canManageStore(store));
 
             if (accessibleStores.length === 0) {
                 storeGrid.innerHTML = '<div class="store-card"><div class="store-icon">🔒</div><div class="store-name" style="font-size: 1.1rem; font-weight: 700;">Sem acesso a nenhuma loja</div><p style="margin: 0; color: #94a3b8;">Peça ao admin principal para conceder acesso a este estabelecimento.</p></div>';
@@ -704,6 +730,61 @@
                 `;
                 storeGrid.appendChild(card);
             });
+        }
+
+        function renderStoreDetail(storeKey) {
+            const store = STORES_DATA[storeKey];
+            if (!store) return;
+
+            const storeGrid = document.getElementById('store-grid');
+            storeGrid.innerHTML = '';
+
+            const title = document.createElement('div');
+            title.className = 'store-card';
+            title.innerHTML = `
+                <div class="store-icon">${store.CONFIG.icon || '🏪'}</div>
+                <div class="store-name" style="font-size: 1.2rem; font-weight: 800;">${store.CONFIG.name} ${store.CONFIG.nameHighlight}</div>
+                <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.25); color: #d1fae5; padding: 0.6rem 0.8rem; border-radius: 999px; font-size: 0.9rem; font-weight: 600;">Você está gerenciando esta loja</div>
+                <p style="margin: 0; color: #94a3b8;">Acesso limitado apenas a este estabelecimento.</p>
+            `;
+            storeGrid.appendChild(title);
+
+            const detailCard = document.createElement('div');
+            detailCard.className = 'store-card';
+            detailCard.innerHTML = `
+                <div style="width: 100%; text-align: left; display: flex; flex-direction: column; gap: 0.6rem;">
+                    <div><strong style="color: white;">📞 WhatsApp:</strong> ${store.CONFIG.whatsappNumber || '-'}</div>
+                    <div><strong style="color: white;">📝 Subtítulo:</strong> ${store.CONFIG.subtitle || '-'}</div>
+                    <div><strong style="color: white;">🕒 Slogan:</strong> ${store.CONFIG.slogan || '-'}</div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem;" onclick="editStoreConfig('${storeKey}')" title="Editar Informações da Loja">⚙️ Config.</button>
+                    <button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; background: #3b82f6;" onclick="manageCategories('${storeKey}')" title="Gerenciar Categorias">📑 Categorias</button>
+                </div>
+            `;
+            storeGrid.appendChild(detailCard);
+
+            const productsCard = document.createElement('div');
+            productsCard.className = 'store-card';
+            let productsHTML = '<div class="products-list"><strong style="margin-bottom: 0.5rem; display: block;">Produtos Cadastrados:</strong>';
+            store.PRODUCTS.forEach((p, index) => {
+                productsHTML += `
+                    <div class="product-item">
+                        <div class="product-info">
+                            <span>${p.name}</span>
+                            <span class="product-price">R$ ${p.price.toFixed(2)}</span>
+                        </div>
+                        <div class="product-actions">
+                            <button class="btn-availability ${p.soldOut ? 'sold-out' : 'available'}" onclick="toggleAvailability('${storeKey}', ${index})">${p.soldOut ? 'Esgotado' : 'Disponível'}</button>
+                            <button class="btn-edit" onclick="editProduct('${storeKey}', ${index})" title="Editar Produto">✏️</button>
+                            <button class="btn-delete" onclick="deleteProduct('${storeKey}', ${index})" title="Excluir Produto">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            productsHTML += `<button class="btn-add-product" onclick="addProduct('${storeKey}')">Adicionar Novo Produto ➕</button></div>`;
+            productsCard.innerHTML = productsHTML;
+            storeGrid.appendChild(productsCard);
         }
         
         function manageStoreAdmins(storeKey) {
@@ -811,6 +892,7 @@
             document.getElementById('store-header-bg-2').value = headerImages[1] || '';
 
             const theme = config.theme || { primaryBg: "#100732", accent: "#10b981", accentHover: "#059669" };
+            document.getElementById('store-theme-mode').value = config.themeMode || 'dark';
             document.getElementById('store-theme-bg').value = theme.primaryBg;
             document.getElementById('store-theme-accent').value = theme.accent;
             document.getElementById('store-theme-hover').value = theme.accentHover;
@@ -851,6 +933,7 @@
             if (bg2) newHeaderImages.push(bg2);
             config.headerImageUrls = newHeaderImages;
 
+            config.themeMode = document.getElementById('store-theme-mode').value;
             config.theme = {
                 primaryBg: document.getElementById('store-theme-bg').value,
                 accent: document.getElementById('store-theme-accent').value,
