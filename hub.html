@@ -891,7 +891,7 @@
             store.CONFIG.admins = [...new Set(emails)].map(email => ({
                 email,
                 permissions
-            })).filter(entry => entry.permissions.products || entry.permissions.categories || entry.permissions.config);
+            }));
 
             if (!store.CONFIG.ownerEmail && currentUserEmail) {
                 store.CONFIG.ownerEmail = currentUserEmail;
