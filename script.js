@@ -64,6 +64,23 @@ class StoreTenantApp {
         }
     }
 
+    showToast(message) {
+        let toast = document.getElementById('toast-msg');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast-msg';
+            toast.className = 'toast';
+            document.body.appendChild(toast);
+        }
+        toast.innerHTML = message;
+        toast.classList.add('show');
+        
+        if (this.toastTimeout) clearTimeout(this.toastTimeout);
+        this.toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
     async persistThemeToFirestore() {
         if (typeof db === 'undefined' || !this.storeKey) return;
 
@@ -385,6 +402,8 @@ class StoreTenantApp {
         // Efeito de pulso para indicar que adicionou
         this.cartFab.style.transform = 'scale(1.2)';
         setTimeout(() => this.cartFab.style.transform = 'scale(1)', 200);
+
+        this.showToast('✅ Produto adicionado ao carrinho!');
     }
 
     changeQuantity(cartItemId, delta) {
@@ -474,15 +493,26 @@ class StoreTenantApp {
         message += `\n*Forma de Pagamento:* ${paymentMethod}\n`;
         message += `\n*Total:* ${this.formatCurrency(total)}\n\nComo funciona para entrega?`;
         const encodedMessage = encodeURIComponent(message);
-        window.open(`https://wa.me/${this.config.whatsappNumber}?text=${encodedMessage}`, '_blank');
+        
+        const btnCheckout = document.getElementById('btn-checkout');
+        const originalText = btnCheckout.innerHTML;
+        btnCheckout.innerHTML = '<span class="spinner"></span> Gerando pedido...';
+        btnCheckout.disabled = true;
 
-        // Limpa o carrinho e atualiza a interface após o redirecionamento
-        this.cart = [];
-        const notesInput = document.getElementById('cart-notes');
-        if (notesInput) notesInput.value = '';
-        const paymentInput = document.getElementById('cart-payment-method');
-        if (paymentInput) paymentInput.value = '';
-        this.updateCartUI();
+        setTimeout(() => {
+            window.open(`https://wa.me/${this.config.whatsappNumber}?text=${encodedMessage}`, '_blank');
+            
+            // Limpa o carrinho e atualiza a interface após o redirecionamento
+            this.cart = [];
+            const notesInput = document.getElementById('cart-notes');
+            if (notesInput) notesInput.value = '';
+            const paymentInput = document.getElementById('cart-payment-method');
+            if (paymentInput) paymentInput.value = '';
+            this.updateCartUI();
+            
+            btnCheckout.innerHTML = originalText;
+            btnCheckout.disabled = false;
+        }, 1200);
     }
 
     setupShareButton() {
