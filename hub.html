@@ -288,7 +288,7 @@
             <textarea id="edit-desc" rows="3" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
 
             <label for="edit-category" style="font-size: 0.9rem; color: #94a3b8;">Categoria</label>
-            <input type="text" id="edit-category" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            <input type="text" id="edit-category" list="categories-datalist" style="text-align: left; margin: 0.3rem 0 1rem 0;">
 
             <label for="edit-extras" style="font-size: 0.9rem; color: #94a3b8;">Adicionais (Um por linha. Ex: Bacon | 3.50)</label>
             <textarea id="edit-extras" rows="2" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
@@ -318,7 +318,8 @@
             <textarea id="add-desc" rows="3" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
 
             <label for="add-category" style="font-size: 0.9rem; color: #94a3b8;">Categoria</label>
-            <input type="text" id="add-category" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            <input type="text" id="add-category" list="categories-datalist" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            <datalist id="categories-datalist"></datalist>
 
             <label for="add-extras" style="font-size: 0.9rem; color: #94a3b8;">Adicionais (Um por linha. Ex: Nutella | 5.00)</label>
             <textarea id="add-extras" rows="2" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
@@ -1127,6 +1128,19 @@
             renderStores();
         }
 
+        function populateCategoriesDatalist(storeKey) {
+            const datalist = document.getElementById('categories-datalist');
+            if (!datalist) return;
+            datalist.innerHTML = '';
+            if (!STORES_DATA[storeKey]) return;
+            const categories = [...new Set(STORES_DATA[storeKey].PRODUCTS.map(p => p.category))];
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                datalist.appendChild(option);
+            });
+        }
+
         function editProduct(storeKey, productIndex) {
             if (!canManageStore(STORES_DATA[storeKey], 'products')) {
                 alert('Você não tem permissão para editar produtos desta loja.');
@@ -1136,6 +1150,8 @@
             currentEditStoreKey = storeKey;
             currentEditProductIndex = productIndex;
             const product = STORES_DATA[storeKey].PRODUCTS[productIndex];
+            
+            populateCategoriesDatalist(storeKey);
             
             // Preenche os campos do formulário
             document.getElementById('edit-name').value = product.name;
@@ -1191,6 +1207,7 @@
             }
 
             currentAddStoreKey = storeKey;
+            populateCategoriesDatalist(storeKey);
             
             // Limpa os campos do formulário antes de abrir
             document.getElementById('add-name').value = '';
