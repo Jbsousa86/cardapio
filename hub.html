@@ -876,35 +876,35 @@
         }
 
         async function saveStoreAdmins() {
-            if (!currentManageAdminStoreKey) return;
-            const store = STORES_DATA[currentManageAdminStoreKey];
-            const emails = document.getElementById('store-admin-emails').value
-                .split('\n')
-                .map(email => email.trim().toLowerCase())
-                .filter(Boolean);
-            const permissions = {
-                products: document.getElementById('admin-perm-products').checked,
-                categories: document.getElementById('admin-perm-categories').checked,
-                config: document.getElementById('admin-perm-config').checked
-            };
-
-            store.CONFIG.admins = [...new Set(emails)].map(email => ({
-                email,
-                permissions
-            }));
-
-            if (!store.CONFIG.ownerEmail && currentUserEmail) {
-                store.CONFIG.ownerEmail = currentUserEmail;
-            }
-
             try {
+                if (!currentManageAdminStoreKey) return;
+                const store = STORES_DATA[currentManageAdminStoreKey];
+                const emails = document.getElementById('store-admin-emails').value
+                    .split('\n')
+                    .map(email => email.trim().toLowerCase())
+                    .filter(Boolean);
+                const permissions = {
+                    products: document.getElementById('admin-perm-products').checked,
+                    categories: document.getElementById('admin-perm-categories').checked,
+                    config: document.getElementById('admin-perm-config').checked
+                };
+
+                store.CONFIG.admins = [...new Set(emails)].map(email => ({
+                    email,
+                    permissions
+                }));
+
+                if (!store.CONFIG.ownerEmail && currentUserEmail) {
+                    store.CONFIG.ownerEmail = currentUserEmail;
+                }
+
                 await db.collection('stores').doc(currentManageAdminStoreKey).set(STORES_DATA[currentManageAdminStoreKey]);
                 closeManageAdminsModal();
                 renderStores();
                 alert('Acessos salvos com sucesso.');
             } catch (error) {
-                console.error('Erro ao salvar acessos da loja:', error);
-                alert('Não foi possível salvar os acessos desta loja.');
+                console.error('Erro geral ao salvar acessos da loja:', error);
+                alert('Erro ao salvar: ' + (error.message || error));
             }
         }
 
