@@ -13,6 +13,13 @@ class StoreTenantApp {
         this.categories = ['Todos', ...new Set(this.products.map(p => p.category))];
         this.currentCategory = 'Todos';
         this.searchQuery = '';
+        this.isLightTheme = false;
+
+        try {
+            this.isLightTheme = localStorage.getItem('cardapio-theme') === 'light';
+        } catch (error) {
+            this.isLightTheme = false;
+        }
         
         this.cart = []; // Nosso estado do carrinho
         this.currentProductForExtras = null; // Guarda o produto alvo
@@ -20,6 +27,7 @@ class StoreTenantApp {
 
     init() {
         this.applyTheme();
+        this.setupThemeToggle();
         this.setupHeader();
         this.setupCart();
         this.setupSearch();
@@ -35,11 +43,37 @@ class StoreTenantApp {
 
     applyTheme() {
         const root = document.documentElement;
+        root.setAttribute('data-theme', this.isLightTheme ? 'light' : 'dark');
+
         if (this.config.theme) {
-            root.style.setProperty('--primary-bg', this.config.theme.primaryBg);
+            if (!this.isLightTheme) {
+                root.style.setProperty('--primary-bg', this.config.theme.primaryBg);
+            }
             root.style.setProperty('--accent', this.config.theme.accent);
             root.style.setProperty('--accent-hover', this.config.theme.accentHover);
         }
+
+        const toggle = document.getElementById('theme-toggle');
+        if (toggle) {
+            toggle.setAttribute('aria-pressed', this.isLightTheme ? 'true' : 'false');
+            toggle.title = this.isLightTheme ? 'Ativar tema escuro' : 'Ativar tema claro';
+            toggle.innerHTML = this.isLightTheme ? '🌙' : '☀️';
+        }
+    }
+
+    setupThemeToggle() {
+        const toggle = document.getElementById('theme-toggle');
+        if (!toggle) return;
+
+        toggle.addEventListener('click', () => {
+            this.isLightTheme = !this.isLightTheme;
+            try {
+                localStorage.setItem('cardapio-theme', this.isLightTheme ? 'light' : 'dark');
+            } catch (error) {
+                // Ignora falhas de armazenamento local
+            }
+            this.applyTheme();
+        });
     }
 
     setupHeader() {
