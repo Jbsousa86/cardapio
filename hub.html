@@ -492,7 +492,7 @@
         <p>Acesse o cardápio de cada estabelecimento</p>
         <button class="btn btn-logout" onclick="logout()">Sair 🚪</button>
 
-        <div style="display: flex; gap: 1rem; margin-bottom: 2rem; max-width: 900px; width: 100%; flex-wrap: wrap; justify-content: center;">
+        <div id="admin-actions" style="display: flex; gap: 1rem; margin-bottom: 2rem; max-width: 900px; width: 100%; flex-wrap: wrap; justify-content: center;">
             <button class="btn" onclick="openAddStoreModal()" style="max-width: 250px;">Adicionar Nova Loja ➕</button>
             <button class="btn" style="background: #3b82f6; max-width: 220px;" onclick="exportData()">Exportar Backup 💾</button>
             <label class="btn" style="background: #f59e0b; max-width: 220px; cursor: pointer; text-align: center; display: inline-block;">
@@ -723,6 +723,11 @@
         }
 
         function renderStores() {
+            const adminActions = document.getElementById('admin-actions');
+            if (adminActions) {
+                adminActions.style.display = currentUserIsPrincipalAdmin ? 'flex' : 'none';
+            }
+
             const accessibleStores = Object.entries(STORES_DATA).filter(([_, store]) => canManageStore(store));
 
             if (!currentUserIsPrincipalAdmin && accessibleStores.length === 1) {
@@ -1089,6 +1094,10 @@
                 alert('Faça login novamente para criar uma loja.');
                 return;
             }
+            if (!currentUserIsPrincipalAdmin) {
+                alert('Apenas o super admin pode criar novas lojas.');
+                return;
+            }
 
             const storeKey = document.getElementById('new-store-key').value.trim().toLowerCase();
             const name = document.getElementById('new-store-name').value.trim();
@@ -1273,6 +1282,10 @@
         }
 
         function exportData() {
+            if (!currentUserIsPrincipalAdmin) {
+                alert('Apenas o super admin pode exportar o backup.');
+                return;
+            }
             const dataStr = JSON.stringify(STORES_DATA, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
@@ -1288,6 +1301,10 @@
         }
 
         function importData(event) {
+            if (!currentUserIsPrincipalAdmin) {
+                alert('Apenas o super admin pode restaurar o backup.');
+                return;
+            }
             const file = event.target.files[0];
             if (!file) return;
 
