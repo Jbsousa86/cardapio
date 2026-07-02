@@ -587,39 +587,46 @@
         async function ensurePrimaryAdmin() {
             if (!currentUserEmail) return false;
 
+            const currentEmail = normalizeEmail(currentUserEmail);
+
             try {
                 const settingsDoc = await db.collection('settings').doc('admin').get();
                 if (settingsDoc.exists) {
-                    const primaryEmail = (settingsDoc.data().primaryAdminEmail || '').toLowerCase();
-                    currentUserIsPrincipalAdmin = primaryEmail === currentUserEmail;
+                    const primaryEmail = normalizeEmail(settingsDoc.data().primaryAdminEmail);
+                    currentUserIsPrincipalAdmin = primaryEmail === currentEmail;
                     return currentUserIsPrincipalAdmin;
                 }
 
-                const storedEmail = (localStorage.getItem('cardapio-principal-admin') || '').toLowerCase();
+                const storedEmail = normalizeEmail(localStorage.getItem('cardapio-principal-admin'));
                 if (storedEmail) {
-                    currentUserIsPrincipalAdmin = storedEmail === currentUserEmail;
+                    currentUserIsPrincipalAdmin = storedEmail === currentEmail;
                     return currentUserIsPrincipalAdmin;
                 }
 
-                await db.collection('settings').doc('admin').set({ primaryAdminEmail: currentUserEmail });
+                await db.collection('settings').doc('admin').set({ primaryAdminEmail: currentEmail });
                 currentUserIsPrincipalAdmin = true;
                 return true;
             } catch (error) {
                 console.error('Erro ao validar admin principal:', error);
-                currentUserIsPrincipalAdmin = true;
-                return true;
+                currentUserIsPrincipalAdmin = false;
+                return false;
             }
+        }
+
+        function normalizeEmail(value) {
+            return (value || '').trim().toLowerCase();
         }
 
         function canManageStore(store) {
             if (!store || !currentUserEmail) return false;
             if (currentUserIsPrincipalAdmin) return true;
 
-            const ownerEmail = (store.CONFIG?.ownerEmail || '').toLowerCase();
-            if (ownerEmail === currentUserEmail) return true;
+            const currentEmail = normalizeEmail(currentUserEmail);
+            const ownerEmail = normalizeEmail(store.CONFIG?.ownerEmail);
+            if (ownerEmail === currentEmail) return true;
 
-            const admins = (store.CONFIG?.admins || []).map(email => (email || '').toLowerCase());
-            return admins.includes(currentUserEmail);
+            const admins = (store.CONFIG?.admins || []).map(normalizeEmail);
+            return admins.includes(currentEmail);
         }
 
         function getAssignedStoreKey(stores) {
