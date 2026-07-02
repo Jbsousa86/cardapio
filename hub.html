@@ -1133,8 +1133,12 @@
             const container = document.getElementById(mode + '-category-chips');
             if (!container) return;
             container.innerHTML = '';
-            if (!STORES_DATA[storeKey] || !STORES_DATA[storeKey].PRODUCTS.length) return;
-            const categories = [...new Set(STORES_DATA[storeKey].PRODUCTS.map(p => p.category))];
+            
+            let categories = [];
+            if (STORES_DATA[storeKey] && STORES_DATA[storeKey].PRODUCTS && STORES_DATA[storeKey].PRODUCTS.length > 0) {
+                categories = [...new Set(STORES_DATA[storeKey].PRODUCTS.map(p => p.category))].filter(Boolean);
+            }
+            
             if (categories.length > 0) {
                 const label = document.createElement('span');
                 label.textContent = 'Já existentes:';
@@ -1143,20 +1147,28 @@
                 label.style.marginRight = '0.3rem';
                 label.style.alignSelf = 'center';
                 container.appendChild(label);
+                
+                categories.forEach(cat => {
+                    const chip = document.createElement('div');
+                    chip.textContent = cat;
+                    chip.style.background = 'rgba(255,255,255,0.1)';
+                    chip.style.border = '1px solid rgba(255,255,255,0.2)';
+                    chip.style.padding = '0.2rem 0.6rem';
+                    chip.style.borderRadius = '999px';
+                    chip.style.fontSize = '0.8rem';
+                    chip.style.cursor = 'pointer';
+                    chip.style.color = '#cbd5e1';
+                    chip.onclick = () => { document.getElementById(mode + '-category').value = cat; };
+                    container.appendChild(chip);
+                });
+            } else {
+                const label = document.createElement('span');
+                label.textContent = 'Nenhuma categoria cadastrada ainda.';
+                label.style.fontSize = '0.8rem';
+                label.style.color = '#94a3b8';
+                label.style.fontStyle = 'italic';
+                container.appendChild(label);
             }
-            categories.forEach(cat => {
-                const chip = document.createElement('div');
-                chip.textContent = cat;
-                chip.style.background = 'rgba(255,255,255,0.1)';
-                chip.style.border = '1px solid rgba(255,255,255,0.2)';
-                chip.style.padding = '0.2rem 0.6rem';
-                chip.style.borderRadius = '999px';
-                chip.style.fontSize = '0.8rem';
-                chip.style.cursor = 'pointer';
-                chip.style.color = '#cbd5e1';
-                chip.onclick = () => { document.getElementById(mode + '-category').value = cat; };
-                container.appendChild(chip);
-            });
         }
 
         function editProduct(storeKey, productIndex) {
