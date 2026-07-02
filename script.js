@@ -400,8 +400,8 @@ class StoreTenantApp {
         this.updateCartUI();
         
         // Efeito de pulso para indicar que adicionou
-        this.cartFab.style.transform = 'scale(1.2)';
-        setTimeout(() => this.cartFab.style.transform = 'scale(1)', 200);
+        this.cartFab.style.transform = 'translateX(-50%) scale(1.05)';
+        setTimeout(() => this.cartFab.style.transform = 'translateX(-50%) scale(1)', 200);
 
         this.showToast('✅ Produto adicionado ao carrinho!');
     }
@@ -424,10 +424,11 @@ class StoreTenantApp {
 
     updateCartUI() {
         const totalItems = this.cart.reduce((sum, item) => sum + item.quantity, 0);
-        this.cartBadge.textContent = totalItems;
         this.cartFab.style.display = totalItems > 0 ? 'flex' : 'none';
 
-        if (totalItems === 0) this.toggleCart(false); // Fecha o modal se esvaziar
+        if (totalItems === 0) {
+            this.toggleCart(false); // Fecha o modal se esvaziar
+        }
 
         this.cartItemsContainer.innerHTML = '';
         let totalPrice = 0;
@@ -459,7 +460,17 @@ class StoreTenantApp {
             itemEl.querySelector('.btn-remove').addEventListener('click', () => this.removeItem(item.cartItemId));
             this.cartItemsContainer.appendChild(itemEl);
         });
+        
         this.cartTotalPrice.textContent = this.formatCurrency(totalPrice);
+        
+        // Atualiza a barra inferior do carrinho com HTML
+        this.cartFab.innerHTML = `
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+                <span style="background:rgba(255,255,255,0.25); padding:0.1rem 0.6rem; border-radius:6px;">${totalItems}</span>
+                <span>Ver sacola</span>
+            </div>
+            <span>${this.formatCurrency(totalPrice)}</span>
+        `;
     }
 
     checkout() {
