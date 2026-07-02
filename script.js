@@ -208,7 +208,9 @@ class StoreTenantApp {
             card.className = `card ${product.soldOut ? 'sold-out' : ''}`;
             
             let displayPrice = this.formatCurrency(product.price);
-            if (product.variants && product.variants.length > 0) {
+            if (product.byWeight) {
+                displayPrice = `${this.formatCurrency(product.price)} <span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">/ kg</span>`;
+            } else if (product.variants && product.variants.length > 0) {
                 const minPrice = Math.min(...product.variants.map(v => v.price));
                 displayPrice = `<span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;">A partir de</span><br>${this.formatCurrency(minPrice)}`;
             }

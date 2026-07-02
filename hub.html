@@ -282,7 +282,12 @@
             <input type="text" id="edit-name" style="text-align: left; margin: 0.3rem 0 1rem 0;">
             
             <label for="edit-price" style="font-size: 0.9rem; color: #94a3b8;">Preço (R$)</label>
-            <input type="number" id="edit-price" step="0.01" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            <input type="number" id="edit-price" step="0.01" style="text-align: left; margin: 0.3rem 0 0.5rem 0;">
+
+            <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; color:#94a3b8; font-size:0.9rem;">
+                <input type="checkbox" id="edit-by-weight" style="width:16px; height:16px; accent-color:#38bdf8;">
+                Vendido por peso (Mostra o preço como /kg)
+            </label>
 
             <label for="edit-desc" style="font-size: 0.9rem; color: #94a3b8;">Descrição</label>
             <textarea id="edit-desc" rows="3" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
@@ -316,7 +321,12 @@
             <input type="text" id="add-name" style="text-align: left; margin: 0.3rem 0 1rem 0;">
             
             <label for="add-price" style="font-size: 0.9rem; color: #94a3b8;">Preço (R$)</label>
-            <input type="number" id="add-price" step="0.01" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            <input type="number" id="add-price" step="0.01" style="text-align: left; margin: 0.3rem 0 0.5rem 0;">
+
+            <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; color:#94a3b8; font-size:0.9rem;">
+                <input type="checkbox" id="add-by-weight" style="width:16px; height:16px; accent-color:#38bdf8;">
+                Vendido por peso (Mostra o preço como /kg)
+            </label>
 
             <label for="add-desc" style="font-size: 0.9rem; color: #94a3b8;">Descrição</label>
             <textarea id="add-desc" rows="3" style="width: 100%; padding: 0.8rem; margin: 0.3rem 0 1rem 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
@@ -1192,6 +1202,7 @@
             // Preenche os campos do formulário
             document.getElementById('edit-name').value = product.name;
             document.getElementById('edit-price').value = product.price.toFixed(2);
+            document.getElementById('edit-by-weight').checked = !!product.byWeight;
             document.getElementById('edit-desc').value = product.description;
             document.getElementById('edit-category').value = product.category;
             document.getElementById('edit-image').value = product.image;
@@ -1214,6 +1225,7 @@
 
             const newName = document.getElementById('edit-name').value.trim();
             const newPrice = parseFloat(document.getElementById('edit-price').value);
+            const newByWeight = document.getElementById('edit-by-weight').checked;
             const newDesc = document.getElementById('edit-desc').value.trim();
             const newCategory = document.getElementById('edit-category').value.trim();
             const newImage = document.getElementById('edit-image').value.trim();
@@ -1227,6 +1239,7 @@
 
             STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].name = newName;
             STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].price = newPrice;
+            STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].byWeight = newByWeight;
             STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].description = newDesc;
             STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].category = newCategory;
             STORES_DATA[currentEditStoreKey].PRODUCTS[currentEditProductIndex].image = newImage || 'https://via.placeholder.com/320x220.png?text=Sem+Imagem';
@@ -1251,6 +1264,7 @@
             // Limpa os campos do formulário antes de abrir
             document.getElementById('add-name').value = '';
             document.getElementById('add-price').value = '';
+            document.getElementById('add-by-weight').checked = false;
             document.getElementById('add-desc').value = '';
             document.getElementById('add-category').value = '';
             document.getElementById('add-image').value = '';
@@ -1273,6 +1287,7 @@
 
             const name = document.getElementById('add-name').value.trim();
             const price = parseFloat(document.getElementById('add-price').value);
+            const byWeight = document.getElementById('add-by-weight').checked;
             const description = document.getElementById('add-desc').value.trim();
             const category = document.getElementById('add-category').value.trim();
             const image = document.getElementById('add-image').value.trim();
@@ -1284,7 +1299,7 @@
                 return;
             }
 
-            const newProduct = { name, price, description, category, variants, extras, image: image || 'https://via.placeholder.com/320x220.png?text=Sem+Imagem', soldOut: false };
+            const newProduct = { name, price, byWeight, description, category, variants, extras, image: image || 'https://via.placeholder.com/320x220.png?text=Sem+Imagem', soldOut: false };
 
             STORES_DATA[currentAddStoreKey].PRODUCTS.push(newProduct);
             
