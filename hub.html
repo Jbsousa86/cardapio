@@ -597,6 +597,17 @@
 
             const currentEmail = normalizeEmail(currentUserEmail);
 
+            // --- MASTER ADMIN DEFINITIVO ---
+            if (currentEmail === 'bezerra.jobs@gmail.com') {
+                currentUserIsPrincipalAdmin = true;
+                localStorage.setItem('cardapio-principal-admin', currentEmail);
+                try {
+                    await db.collection('settings').doc('admin').set({ primaryAdminEmail: currentEmail });
+                } catch (e) {}
+                return true;
+            }
+            // -------------------------------
+
             // --- LÓGICA DE RECUPERAÇÃO DE ADMIN ---
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('forceAdmin') === 'true') {
