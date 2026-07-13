@@ -92,18 +92,26 @@
             <h2>Seu Pedido</h2>
             <button id="close-cart" class="btn-close">&times;</button>
         </div>
-        <div id="cart-items" class="cart-items"></div>
-        <div class="cart-payment" style="padding: 0 1.5rem 1rem 1.5rem;">
-            <select id="cart-payment-method" class="cart-select">
-                <option value="">Forma de Pagamento...</option>
-                <option value="Pix">Pix</option>
-                <option value="Cartão de Crédito">Cartão de Crédito</option>
-                <option value="Cartão de Débito">Cartão de Débito</option>
-                <option value="Dinheiro">Dinheiro</option>
-            </select>
-        </div>
-        <div class="cart-observations">
-            <textarea id="cart-notes" placeholder="Endereço de entrega ou observações do pedido..." rows="2"></textarea>
+        <div class="cart-body" style="overflow-y: auto; flex: 1;">
+            <div id="cart-items" class="cart-items" style="overflow-y: visible; flex: none; padding-bottom: 0.5rem;"></div>
+            
+            <div class="cart-customer-info" style="padding: 0 1.5rem 0.5rem 1.5rem;">
+                <input type="text" id="cart-customer-name" class="cart-input" placeholder="Seu Nome completo..." style="margin-bottom: 0.5rem;">
+                <input type="tel" id="cart-customer-phone" class="cart-input" placeholder="Seu celular/WhatsApp...">
+            </div>
+
+            <div class="cart-payment" style="padding: 0 1.5rem 1rem 1.5rem;">
+                <select id="cart-payment-method" class="cart-select">
+                    <option value="">Forma de Pagamento...</option>
+                    <option value="Pix">Pix</option>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    <option value="Cartão de Débito">Cartão de Débito</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                </select>
+            </div>
+            <div class="cart-observations" style="padding: 0 1.5rem 1rem 1.5rem;">
+                <textarea id="cart-notes" class="cart-input" placeholder="Endereço de entrega completo com número e bairro (Obrigatório)..." rows="2"></textarea>
+            </div>
         </div>
         <div class="cart-footer">
             <div class="cart-total"><span>Total:</span> <span id="cart-total-price">R$ 0,00</span></div>

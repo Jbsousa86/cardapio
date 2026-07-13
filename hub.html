@@ -374,7 +374,9 @@
             <label for="store-slogan" style="font-size: 0.9rem; color: #94a3b8;">Slogan / Horário de Func.</label>
             <input type="text" id="store-slogan" style="text-align: left; margin: 0.3rem 0 1rem 0;">
 
-            <label for="store-logo" style="font-size: 0.9rem; color: #94a3b8;">URL da Logo</label>
+            <h3 style="text-align: center; margin-top: 1rem; margin-bottom: 1rem; color: var(--accent); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">Identidade Visual</h3>
+
+            <label for="store-logo" style="font-size: 0.9rem; color: #94a3b8;">URL da Logo (Cardápio)</label>
             <input type="text" id="store-logo" style="text-align: left; margin: 0.3rem 0 1.5rem 0;">
 
             <h3 style="text-align: center; margin-top: 1rem; margin-bottom: 1rem; color: var(--accent); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">Imagens de Fundo (Cabeçalho)</h3>
@@ -424,6 +426,28 @@
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                 <button class="btn" style="background: #64748b;" onclick="closeEditStoreModal()">Cancelar</button>
                 <button class="btn" onclick="saveStoreConfig()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Dados Cadastrais da Loja (Recibos) -->
+    <div id="edit-store-data-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: none; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(8px);">
+        <div class="login-box" style="text-align: left; max-width: 400px; max-height: 90vh; overflow-y: auto;">
+            <h2 style="text-align: center; margin-top: 0; margin-bottom: 1rem;">Dados Cadastrais</h2>
+            <p style="text-align: center; font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.5rem;">Esses dados aparecerão impressos nos cupons dos clientes.</p>
+            
+            <label for="data-document" style="font-size: 0.9rem; color: #94a3b8;">CNPJ ou CPF da Loja</label>
+            <input type="text" id="data-document" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="data-phone" style="font-size: 0.9rem; color: #94a3b8;">Telefone (Contato do Recibo)</label>
+            <input type="text" id="data-phone" style="text-align: left; margin: 0.3rem 0 1rem 0;">
+            
+            <label for="data-address" style="font-size: 0.9rem; color: #94a3b8;">Endereço Completo</label>
+            <input type="text" id="data-address" style="text-align: left; margin: 0.3rem 0 1.5rem 0;">
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn" style="background: #64748b;" onclick="closeStoreDataModal()">Cancelar</button>
+                <button class="btn" onclick="saveStoreData()">Salvar Dados</button>
             </div>
         </div>
     </div>
@@ -519,6 +543,36 @@
         </div>
         <div class="grid" id="store-grid">
             <!-- Gerado via JS -->
+        </div>
+    </div>
+
+    <!-- Tela de Relatórios -->
+    <div id="reports-content" style="display: none; flex-direction: column; align-items: center; width: 100%; max-width: 900px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 2rem;">
+            <button class="btn" style="background: #64748b; padding: 0.6rem 1rem;" onclick="closeReports()">⬅️ Voltar</button>
+            <h1 style="margin: 0; font-size: 1.5rem;">Relatório de Vendas</h1>
+            <input type="date" id="report-date-picker" class="btn" style="background: white; color: black; padding: 0.6rem; font-family: inherit;" onchange="loadReports()">
+        </div>
+        
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem; width: 100%;">
+            <div class="store-card" style="text-align: center;">
+                <h3 style="color: #94a3b8; margin-bottom: 0.5rem;">Total Faturado</h3>
+                <div id="report-total-amount" style="font-size: 2rem; font-weight: 800; color: #10b981;">R$ 0,00</div>
+            </div>
+            <div class="store-card" style="text-align: center;">
+                <h3 style="color: #94a3b8; margin-bottom: 0.5rem;">Qtd. Pedidos Concluídos</h3>
+                <div id="report-total-count" style="font-size: 2rem; font-weight: 800; color: white;">0</div>
+            </div>
+        </div>
+
+        <div class="store-card" style="width: 100%; margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Resumo por Forma de Pagamento</h3>
+            <div id="report-methods" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+        </div>
+
+        <div class="store-card" style="width: 100%; margin-bottom: 4rem;">
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Histórico do Dia</h3>
+            <div id="report-history" style="display: flex; flex-direction: column; gap: 1rem;"></div>
         </div>
     </div>
 
@@ -635,16 +689,8 @@
         }
 
         function getAdminPermissions(entry) {
-            if (typeof entry === 'string') {
-                return { products: true, categories: true, config: true };
-            }
-
-            const permissions = entry?.permissions || {};
-            return {
-                products: !!permissions.products,
-                categories: !!permissions.categories,
-                config: !!permissions.config
-            };
+            // Como o painel é do lojista, qualquer admin da loja tem acesso total às suas configurações (layout, produtos, categorias)
+            return { products: true, categories: true, config: true };
         }
 
         function getStoreAdminPermissions(store) {
@@ -802,9 +848,11 @@
                     </div>
 
                     <div style="display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; background: #eab308; color: black;" onclick="editStoreData('${key}')" title="Editar CNPJ e Endereço">📝 Cadastro</button>
                         ${canEditConfig ? `<button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem;" onclick="editStoreConfig('${key}')" title="Editar Informações da Loja">⚙️ Config.</button>` : ''}
                         ${canManageCategories ? `<button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; background: #3b82f6;" onclick="manageCategories('${key}')" title="Gerenciar Categorias">📑 Categorias</button>` : ''}
                         ${currentUserIsPrincipalAdmin ? `<button class="btn-edit btn-admins" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem;" onclick="manageStoreAdmins('${key}')" title="Gerenciar Acesso da Loja">👤 Admins (Mestre)</button>` : ''}
+                        <button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; background: #8b5cf6;" onclick="openReports('${key}')" title="Ver Relatórios Financeiros">📊 Relatórios</button>
                         <a href="index.html?s=${key}" class="btn" style="flex: 1; min-width: 110px; text-decoration: none; display: flex; justify-content: center; align-items: center; padding: 0.6rem; font-size: 0.85rem;">Cardápio ➔</a>
                     </div>
                     ${productsHTML}
@@ -842,8 +890,10 @@
                     <div><strong style="color: white;">🕒 Slogan:</strong> ${store.CONFIG.slogan || '-'}</div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; background: #eab308; color: black;" onclick="editStoreData('${storeKey}')" title="Editar CNPJ e Endereço">📝 Cadastro</button>
                     ${canEditStoreConfig ? `<button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem;" onclick="editStoreConfig('${storeKey}')" title="Editar Informações da Loja">⚙️ Config.</button>` : ''}
                     ${canManageStoreCategories ? `<button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; background: #3b82f6;" onclick="manageCategories('${storeKey}')" title="Gerenciar Categorias">📑 Categorias</button>` : ''}
+                    <button class="btn-edit" style="flex: 1; min-width: 110px; padding: 0.6rem; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; background: #8b5cf6;" onclick="openReports('${storeKey}')" title="Ver Relatórios Financeiros">📊 Relatórios</button>
                 </div>
             `;
             storeGrid.appendChild(detailCard);
@@ -1076,6 +1126,42 @@
                 alert('Configurações da loja salvas com sucesso.');
             } catch (error) {
                 console.error('Erro geral ao salvar configurações da loja:', error);
+                alert('Erro ao salvar: ' + (error.message || error));
+            }
+        }
+
+        // --- DADOS CADASTRAIS DA LOJA (CNPJ, ENDEREÇO) ---
+        let currentStoreDataKey = null;
+
+        function editStoreData(storeKey) {
+            currentStoreDataKey = storeKey;
+            const config = STORES_DATA[storeKey].CONFIG;
+            
+            document.getElementById('data-document').value = config.document || '';
+            document.getElementById('data-phone').value = config.phone || '';
+            document.getElementById('data-address').value = config.address || '';
+            
+            document.getElementById('edit-store-data-overlay').style.display = 'flex';
+        }
+
+        function closeStoreDataModal() {
+            document.getElementById('edit-store-data-overlay').style.display = 'none';
+        }
+
+        async function saveStoreData() {
+            try {
+                if (!currentStoreDataKey) return;
+                
+                const config = STORES_DATA[currentStoreDataKey].CONFIG;
+                config.document = document.getElementById('data-document').value.trim();
+                config.phone = document.getElementById('data-phone').value.trim();
+                config.address = document.getElementById('data-address').value.trim();
+                
+                await db.collection('stores').doc(currentStoreDataKey).set(STORES_DATA[currentStoreDataKey]);
+                closeStoreDataModal();
+                alert('Dados cadastrais salvos com sucesso!');
+            } catch (error) {
+                console.error('Erro ao salvar dados cadastrais:', error);
                 alert('Erro ao salvar: ' + (error.message || error));
             }
         }
@@ -1394,6 +1480,131 @@
                 event.target.value = '';
             };
             reader.readAsText(file);
+        }
+
+        // --- SISTEMA DE RELATÓRIOS ---
+        let currentReportStoreKey = null;
+
+        function closeReports() {
+            document.getElementById('reports-content').style.display = 'none';
+            document.getElementById('main-content').style.display = 'flex';
+        }
+
+        async function openReports(storeKey) {
+            currentReportStoreKey = storeKey;
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('reports-content').style.display = 'flex';
+            
+            // Define o DatePicker para a data atual local
+            const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+            document.getElementById('report-date-picker').value = localISOTime;
+            
+            await loadReports();
+        }
+
+        async function loadReports() {
+            if (!currentReportStoreKey) return;
+            
+            const dateStr = document.getElementById('report-date-picker').value; 
+            if (!dateStr) return;
+            
+            const [year, month, day] = dateStr.split('-');
+            const startOfDay = new Date(year, month - 1, day, 0, 0, 0);
+            const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+            
+            const historyContainer = document.getElementById('report-history');
+            const methodsContainer = document.getElementById('report-methods');
+            const totalAmountEl = document.getElementById('report-total-amount');
+            const totalCountEl = document.getElementById('report-total-count');
+            
+            historyContainer.innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 2rem;">Carregando dados na nuvem...</div>';
+            methodsContainer.innerHTML = '';
+            
+            try {
+                // Como não sabemos se as rules permitem index complexo, fazemos range simples
+                const salesSnap = await db.collection('stores').doc(currentReportStoreKey).collection('sales')
+                    .where('timestamp', '>=', startOfDay).where('timestamp', '<=', endOfDay).get();
+                    
+                const ordersSnap = await db.collection('stores').doc(currentReportStoreKey).collection('orders')
+                    .where('timestamp', '>=', startOfDay).where('timestamp', '<=', endOfDay).get();
+                    
+                let docs = [];
+                salesSnap.forEach(doc => docs.push(doc.data()));
+                ordersSnap.forEach(doc => docs.push(doc.data()));
+                
+                // Ordena do mais recente para o mais antigo
+                docs.sort((a, b) => {
+                    const tA = a.timestamp ? a.timestamp.toMillis() : 0;
+                    const tB = b.timestamp ? b.timestamp.toMillis() : 0;
+                    return tB - tA;
+                });
+                
+                let totalAmount = 0;
+                let validCount = 0;
+                let methodTotals = {};
+                
+                historyContainer.innerHTML = '';
+                
+                if (docs.length === 0) {
+                    historyContainer.innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 2rem 0;">Nenhuma venda registrada nesta data.</div>';
+                }
+                
+                docs.forEach(data => {
+                    const isOnline = data.hasOwnProperty('status');
+                    const status = data.status || 'novo';
+                    
+                    // Apenas pedidos online 'concluido' entram na conta
+                    if (isOnline && status !== 'concluido') return;
+                    
+                    const total = parseFloat(data.total || 0);
+                    const method = data.paymentMethod || 'Desconhecido';
+                    
+                    totalAmount += total;
+                    validCount++;
+                    methodTotals[method] = (methodTotals[method] || 0) + total;
+                    
+                    const ts = data.timestamp ? data.timestamp.toDate() : new Date();
+                    const timeStr = ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const typeLabel = isOnline ? '🛵 Delivery' : '🏪 Balcão';
+                    
+                    let itemsStr = (data.items || []).map(i => `${i.quantity || 1}x ${i.name}`).join(', ');
+                    if(!itemsStr) itemsStr = 'Venda Registrada';
+                    
+                    historyContainer.innerHTML += `
+                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 700; margin-bottom: 0.3rem;">${itemsStr}</div>
+                                <div style="font-size: 0.85rem; color: #94a3b8;">${typeLabel} • ${method} • Op: ${data.operator || (isOnline ? 'Online' : '-')}</div>
+                            </div>
+                            <div style="text-align: right; min-width: 80px;">
+                                <div style="font-weight: 800; color: #10b981;">R$ ${total.toFixed(2)}</div>
+                                <div style="font-size: 0.85rem; color: #94a3b8;">${timeStr}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                totalAmountEl.textContent = `R$ ${totalAmount.toFixed(2)}`;
+                totalCountEl.textContent = validCount;
+                
+                Object.entries(methodTotals).sort((a,b) => b[1] - a[1]).forEach(([method, amt]) => {
+                    methodsContainer.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                            <span style="font-size: 1.1rem;">${method}</span>
+                            <strong style="color: #10b981; font-size: 1.1rem;">R$ ${amt.toFixed(2)}</strong>
+                        </div>
+                    `;
+                });
+                
+                if (validCount === 0) {
+                    methodsContainer.innerHTML = '<div style="color: #94a3b8; text-align: center; padding: 1rem;">Sem dados para calcular.</div>';
+                }
+                
+            } catch (e) {
+                console.error(e);
+                historyContainer.innerHTML = `<div style="color: #ef4444; padding: 1rem; text-align: center;">Erro ao carregar relatórios: ${e.message}</div>`;
+            }
         }
     </script>
 </body>

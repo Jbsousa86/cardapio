@@ -721,7 +721,7 @@ body {
     padding: 0 1.5rem 1rem 1.5rem;
 }
 
-#cart-notes {
+.cart-input {
     width: 100%;
     background: var(--surface-muted);
     border: 1px solid var(--element-border);
@@ -735,7 +735,7 @@ body {
     transition: border-color var(--transition-speed);
 }
 
-#cart-notes:focus { border-color: var(--accent); }
+.cart-input:focus { border-color: var(--accent); }
 
 /* --- Estilos para Produtos Esgotados --- */
 .card.sold-out {

@@ -473,9 +473,25 @@ class StoreTenantApp {
         `;
     }
 
-    checkout() {
+    async checkout() {
         if (this.cart.length === 0) return;
-        let message = `Olá, vim pelo cardápio online! Gostaria de pedir:\n\n`;
+        
+        const customerNameInput = document.getElementById('cart-customer-name');
+        const customerPhoneInput = document.getElementById('cart-customer-phone');
+        
+        const customerName = customerNameInput ? customerNameInput.value.trim() : '';
+        const customerPhone = customerPhoneInput ? customerPhoneInput.value.trim() : '';
+
+        if (!customerName) {
+            alert('Por favor, informe seu nome para o pedido.');
+            return;
+        }
+        if (!customerPhone) {
+            alert('Por favor, informe seu número de WhatsApp.');
+            return;
+        }
+
+        let message = `Olá, meu nome é *${customerName}* (Tel: ${customerPhone}) e vim pelo cardápio online! Gostaria de pedir:\n\n`;
         let total = 0;
         
         this.cart.forEach(item => {
@@ -497,9 +513,12 @@ class StoreTenantApp {
         }
 
         const notes = document.getElementById('cart-notes').value.trim();
-        if (notes) {
-            message += `\n*Observações/Endereço:*\n${notes}\n`;
+        if (!notes) {
+            alert('Por favor, informe seu endereço completo para entrega (Rua, Número, Bairro).');
+            return;
         }
+        
+        message += `\n*Endereço de Entrega/Obs:*\n${notes}\n`;
 
         message += `\n*Forma de Pagamento:* ${paymentMethod}\n`;
         message += `\n*Total:* ${this.formatCurrency(total)}\n\nComo funciona para entrega?`;
@@ -507,8 +526,31 @@ class StoreTenantApp {
         
         const btnCheckout = document.getElementById('btn-checkout');
         const originalText = btnCheckout.innerHTML;
-        btnCheckout.innerHTML = '<span class="spinner"></span> Gerando pedido...';
+        btnCheckout.innerHTML = '<span class="spinner"></span> Enviando pedido...';
         btnCheckout.disabled = true;
+
+        // SALVAR NO BANCO DE DADOS (FIREBASE) PARA APARECER NO CAIXA PDV!
+        try {
+            const orderData = {
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                customerName: customerName,
+                customerPhone: customerPhone,
+                address: notes,
+                paymentMethod: paymentMethod,
+                status: 'novo',
+                total: total,
+                items: this.cart.map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    variant: item.selectedVariant ? item.selectedVariant.name : null,
+                    extras: item.selectedExtras ? item.selectedExtras.map(e => ({ name: e.name, price: e.price })) : []
+                }))
+            };
+            await firebase.firestore().collection('stores').doc(this.storeKey).collection('orders').add(orderData);
+        } catch(e) {
+            console.error('Erro ao enviar pedido para o sistema PDV:', e);
+            alert('Falha ao enviar para o sistema da loja: ' + e.message);
+        }
 
         setTimeout(() => {
             window.open(`https://wa.me/${this.config.whatsappNumber}?text=${encodedMessage}`, '_blank');
@@ -517,13 +559,15 @@ class StoreTenantApp {
             this.cart = [];
             const notesInput = document.getElementById('cart-notes');
             if (notesInput) notesInput.value = '';
+            if (customerNameInput) customerNameInput.value = '';
+            if (customerPhoneInput) customerPhoneInput.value = '';
             const paymentInput = document.getElementById('cart-payment-method');
             if (paymentInput) paymentInput.value = '';
             this.updateCartUI();
             
             btnCheckout.innerHTML = originalText;
             btnCheckout.disabled = false;
-        }, 1200);
+        }, 500);
     }
 
     setupShareButton() {

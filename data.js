@@ -112,28 +112,64 @@ let STORES_DATA = {
                 description: "Açaí premium com banana, granola e mel.",
                 price: 15.00,
                 image: "https://tse3.mm.bing.net/th/id/OIP.h8U2iwO_IkuZL5YiHPjlbgHaHa?pid=Api&P=0&h=180",
-                category: "Copos"
+                category: "Copos",
+                extras: [
+                    { name: "Leite Ninho", price: 2.50 },
+                    { name: "Morango", price: 3.00 },
+                    { name: "Nutella", price: 4.50 },
+                    { name: "Paçoca", price: 2.00 },
+                    { name: "Leite Condensado", price: 2.50 },
+                    { name: "Granola Extra", price: 1.50 },
+                    { name: "Banana", price: 1.50 }
+                ]
             },
             {
                 name: "Copo Turbo 500ml",
                 description: "Leite em pó, morango, paçoca e cobertura de chocolate.",
                 price: 22.00,
                 image: "https://images.unsplash.com/photo-1590301157890-4810ed352733?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-                category: "Copos"
+                category: "Copos",
+                extras: [
+                    { name: "Leite Ninho", price: 2.50 },
+                    { name: "Morango", price: 3.00 },
+                    { name: "Nutella", price: 4.50 },
+                    { name: "Paçoca", price: 2.00 },
+                    { name: "Leite Condensado", price: 2.50 },
+                    { name: "Granola Extra", price: 1.50 },
+                    { name: "Banana", price: 1.50 }
+                ]
             },
             {
                 name: "Açaí no Quilo (Auto-Serviço)",
                 description: "Escolha seus acompanhamentos e monte do seu jeito no balcão.",
                 price: 18.00,
                 image: "https://tse4.mm.bing.net/th/id/OIP.ySwJqa9OKrkE8MlOidjmZgHaJ3?pid=Api&P=0&h=180",
-                category: "Self-Service"
+                category: "Self-Service",
+                extras: [
+                    { name: "Leite Ninho", price: 2.50 },
+                    { name: "Morango", price: 3.00 },
+                    { name: "Nutella", price: 4.50 },
+                    { name: "Paçoca", price: 2.00 },
+                    { name: "Leite Condensado", price: 2.50 },
+                    { name: "Granola Extra", price: 1.50 },
+                    { name: "Banana", price: 1.50 }
+                ]
             },
             {
                 name: "Barca Especial (Para Dois)",
                 description: "600g de açaí, 4 frutas, 3 cereais e bordinha de Nutella.",
                 price: 45.00,
                 image: "https://i.pinimg.com/originals/56/92/cf/5692cfb07f6f1e86a2c873e945ff327e.jpg",
-                category: "Especiais"
+                category: "Especiais",
+                extras: [
+                    { name: "Leite Ninho", price: 2.50 },
+                    { name: "Morango", price: 3.00 },
+                    { name: "Nutella", price: 4.50 },
+                    { name: "Paçoca", price: 2.00 },
+                    { name: "Leite Condensado", price: 2.50 },
+                    { name: "Granola Extra", price: 1.50 },
+                    { name: "Banana", price: 1.50 }
+                ]
             }
         ]
     }
