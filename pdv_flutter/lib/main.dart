@@ -10,7 +10,12 @@ import 'package:printing/printing.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 Color _parseStoreColor(Map<String, dynamic>? config) {
-  final colorStr = config?['primaryColor']?.toString() ?? config?['themeColor']?.toString();
+  String? colorStr = config?['primaryColor']?.toString() ?? config?['themeColor']?.toString();
+  
+  if (colorStr == null && config != null && config['theme'] is Map) {
+    colorStr = config['theme']['accent']?.toString() ?? config['theme']['primaryBg']?.toString();
+  }
+
   if (colorStr == null || colorStr.isEmpty) return Colors.green;
   String hex = colorStr.replaceAll('#', '');
   if (hex.length == 6) hex = 'FF$hex';
@@ -290,6 +295,8 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
   late Color _primaryColorLight;
 
   StreamSubscription? _ordersSubscription;
+  StreamSubscription? _storeSubscription;
+  late Map<String, dynamic> _currentStoreData;
   int _pendingOnlineCount = 0;
   final AudioPlayer _audioPlayer = AudioPlayer();
   Timer? _alertTimer;
@@ -297,10 +304,8 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
   final TextEditingController _localCustomerNameController = TextEditingController();
   final TextEditingController _localCustomerPhoneController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    final config = widget.storeData['CONFIG'] ?? {};
+  void _updateStoreInfo(Map<String, dynamic> data) {
+    final config = data['CONFIG'] ?? {};
     final baseName = config['name'] ?? widget.storeId;
     final highlight = config['nameHighlight'] ?? '';
     _storeName = '$baseName $highlight'.trim();
@@ -308,6 +313,28 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
     _primaryColor = _parseStoreColor(config);
     _primaryColorDark = _darkenColor(_primaryColor);
     _primaryColorLight = _lightenColor(_primaryColor);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _currentStoreData = widget.storeData;
+    _updateStoreInfo(_currentStoreData);
+
+    _storeSubscription = FirebaseFirestore.instance
+        .collection('stores')
+        .doc(widget.storeId)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists && snapshot.data() != null) {
+        if (mounted) {
+          setState(() {
+            _currentStoreData = snapshot.data()!;
+            _updateStoreInfo(_currentStoreData);
+          });
+        }
+      }
+    });
 
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -395,6 +422,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
     _alertTimer?.cancel();
     _audioPlayer.dispose();
     _ordersSubscription?.cancel();
+    _storeSubscription?.cancel();
     super.dispose();
   }
 
@@ -697,7 +725,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final products = List<dynamic>.from(widget.storeData['PRODUCTS'] ?? []);
+    final products = List<dynamic>.from(_currentStoreData['PRODUCTS'] ?? []);
     final total = _calculateTotal();
 
     return DefaultTabController(
@@ -1470,6 +1498,14 @@ class ReceiptDialog extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [const Text('PAGAMENTO:'), Text(method, style: const TextStyle(fontWeight: FontWeight.bold))],
                     ),
+                    if (method == 'Dinheiro' && saleData['changeFor'] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [const Text('TROCO PARA:'), Text('R\$ ${saleData['changeFor']}', style: const TextStyle(fontWeight: FontWeight.bold))],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1597,6 +1633,17 @@ Future<Uint8List> generateReceiptPdf(Map<String, dynamic> saleData, String store
                 pw.Text(method, style: const pw.TextStyle(fontSize: 12)),
               ],
             ),
+            if (method == 'Dinheiro' && saleData['changeFor'] != null)
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(top: 4),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('TROCO PARA:', style: const pw.TextStyle(fontSize: 12)),
+                    pw.Text('R\$ ${saleData['changeFor']}', style: const pw.TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
             pw.SizedBox(height: 16),
             pw.Divider(borderStyle: pw.BorderStyle.dashed),
             pw.Center(child: pw.Text('Obrigado pela preferencia!', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12))),

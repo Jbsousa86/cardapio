@@ -274,6 +274,19 @@ class StoreTenantApp {
         this.cartOverlay.addEventListener('click', () => this.toggleCart(false));
         document.getElementById('btn-checkout').addEventListener('click', () => this.checkout());
 
+        const paymentSelect = document.getElementById('cart-payment-method');
+        const changeContainer = document.getElementById('cart-change-container');
+        if (paymentSelect && changeContainer) {
+            paymentSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'Dinheiro') {
+                    changeContainer.style.display = 'block';
+                } else {
+                    changeContainer.style.display = 'none';
+                    document.getElementById('cart-change-amount').value = '';
+                }
+            });
+        }
+
         // Eventos do Modal de Extras
         document.getElementById('close-extras').addEventListener('click', () => this.toggleExtrasModal(false));
         document.getElementById('extras-overlay').addEventListener('click', () => this.toggleExtrasModal(false));
@@ -512,6 +525,14 @@ class StoreTenantApp {
             return;
         }
 
+        let changeAmount = '';
+        if (paymentMethod === 'Dinheiro') {
+            const changeInput = document.getElementById('cart-change-amount');
+            if (changeInput && changeInput.value) {
+                changeAmount = changeInput.value;
+            }
+        }
+
         const notes = document.getElementById('cart-notes').value.trim();
         if (!notes) {
             alert('Por favor, informe seu endereço completo para entrega (Rua, Número, Bairro).');
@@ -521,6 +542,9 @@ class StoreTenantApp {
         message += `\n*Endereço de Entrega/Obs:*\n${notes}\n`;
 
         message += `\n*Forma de Pagamento:* ${paymentMethod}\n`;
+        if (paymentMethod === 'Dinheiro' && changeAmount) {
+            message += `*Troco para:* R$ ${changeAmount}\n`;
+        }
         message += `\n*Total:* ${this.formatCurrency(total)}\n\nComo funciona para entrega?`;
         const encodedMessage = encodeURIComponent(message);
         
@@ -537,6 +561,7 @@ class StoreTenantApp {
                 customerPhone: customerPhone,
                 address: notes,
                 paymentMethod: paymentMethod,
+                changeFor: changeAmount || null,
                 status: 'novo',
                 total: total,
                 items: this.cart.map(item => ({
@@ -563,6 +588,10 @@ class StoreTenantApp {
             if (customerPhoneInput) customerPhoneInput.value = '';
             const paymentInput = document.getElementById('cart-payment-method');
             if (paymentInput) paymentInput.value = '';
+            const changeInput = document.getElementById('cart-change-amount');
+            if (changeInput) changeInput.value = '';
+            const changeContainer = document.getElementById('cart-change-container');
+            if (changeContainer) changeContainer.style.display = 'none';
             this.updateCartUI();
             
             btnCheckout.innerHTML = originalText;
