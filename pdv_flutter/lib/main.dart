@@ -8,6 +8,22 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:audioplayers/audioplayers.dart';
+
+Color _parseStoreColor(Map<String, dynamic>? config) {
+  final colorStr = config?['primaryColor']?.toString() ?? config?['themeColor']?.toString();
+  if (colorStr == null || colorStr.isEmpty) return Colors.green;
+  String hex = colorStr.replaceAll('#', '');
+  if (hex.length == 6) hex = 'FF$hex';
+  if (hex.length == 8) {
+    int? val = int.tryParse(hex, radix: 16);
+    if (val != null) return Color(val);
+  }
+  return Colors.green;
+}
+
+Color _darkenColor(Color c) => Color.fromARGB(c.alpha, (c.red * 0.8).toInt(), (c.green * 0.8).toInt(), (c.blue * 0.8).toInt());
+Color _lightenColor(Color c) => c.withOpacity(0.2);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -231,7 +247,7 @@ class StoresScreen extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
-                  leading: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.store, color: Colors.white)),
+                  leading: CircleAvatar(backgroundColor: _parseStoreColor(config), child: const Icon(Icons.store, color: Colors.white)),
                   title: Text(storeName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   subtitle: const Text('Abrir Terminal PDV desta loja'),
                   trailing: const Icon(Icons.chevron_right),
@@ -268,6 +284,10 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
   final List<Map<String, dynamic>> _cartItems = [];
   bool _isSavingSale = false;
   String _storeName = '';
+  bool _showCartOnMobile = false;
+  late Color _primaryColor;
+  late Color _primaryColorDark;
+  late Color _primaryColorLight;
 
   StreamSubscription? _ordersSubscription;
   int _pendingOnlineCount = 0;
@@ -284,6 +304,10 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
     final baseName = config['name'] ?? widget.storeId;
     final highlight = config['nameHighlight'] ?? '';
     _storeName = '$baseName $highlight'.trim();
+    
+    _primaryColor = _parseStoreColor(config);
+    _primaryColorDark = _darkenColor(_primaryColor);
+    _primaryColorLight = _lightenColor(_primaryColor);
 
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -352,7 +376,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
 
   void _playLoudAlert() async {
     try {
-      await _audioPlayer.play(UrlSource('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg'));
+      await _audioPlayer.play(UrlSource('https://actions.google.com/sounds/v1/alarms/mechanical_clock_ring.ogg'));
     } catch (e) {
       debugPrint('Erro no audio loud: $e');
     }
@@ -437,7 +461,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
               actions: [
                 TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, foregroundColor: Colors.white),
                   onPressed: () {
                     if (variants != null && variants.isNotEmpty && selectedVariant == null) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecione uma opção obrigatória.')));
@@ -601,7 +625,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
               actions: [
                 TextButton(onPressed: () => Navigator.pop(context), child: const Text('Voltar', style: TextStyle(color: Colors.grey))),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, foregroundColor: Colors.white),
                   onPressed: change >= 0 ? () {
                     Navigator.pop(context);
                     _confirmAndSaveSale('Dinheiro');
@@ -681,7 +705,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('PDV | $_storeName'),
-          backgroundColor: Colors.green.shade800,
+          backgroundColor: _primaryColorDark,
           foregroundColor: Colors.white,
           bottom: TabBar(
             labelColor: Colors.white,
@@ -709,8 +733,8 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
                   MaterialPageRoute(builder: (_) => DailyReportScreen(storeId: widget.storeId, storeName: _storeName))
                 );
               },
-              icon: const Icon(Icons.receipt_long, color: Colors.green),
-              label: const Text('Resumo do Dia', style: TextStyle(color: Colors.green)),
+              icon: Icon(Icons.receipt_long, color: _primaryColor),
+              label: Text('Resumo do Dia', style: TextStyle(color: _primaryColor)),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
             ),
             const SizedBox(width: 16),
@@ -719,14 +743,16 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
         body: TabBarView(
           children: [
             // TAB 1: CAIXA LOCAL
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = constraints.maxWidth < 800;
+
+                final productsGrid = Expanded(
+                  flex: isMobile ? 3 : 2,
                   child: GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3, 
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isMobile ? 2 : 3, 
                       childAspectRatio: 0.75,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
@@ -767,7 +793,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
                                   children: [
                                     Text(product['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
                                     const SizedBox(height: 4),
-                                    Text('R\$ ${(price as num).toStringAsFixed(2)}', style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 16)),
+                                    Text('R\$ ${(price as num).toStringAsFixed(2)}', style: TextStyle(color: _primaryColorDark, fontWeight: FontWeight.bold, fontSize: 16)),
                                   ],
                                 ),
                               ),
@@ -777,12 +803,16 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
                       );
                     },
                   ),
-                ),
-                Container(
-                  width: 350,
+                );
+
+                final cartContainer = Container(
+                  width: isMobile ? double.infinity : 350,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border(left: BorderSide(color: Colors.grey.shade300)),
+                    border: Border(
+                      left: isMobile ? BorderSide.none : BorderSide(color: Colors.grey.shade300),
+                      top: isMobile ? BorderSide(color: Colors.grey.shade300) : BorderSide.none,
+                    ),
                     boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(-2, 0))],
                   ),
                   child: Column(
@@ -849,7 +879,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
                                           ),
                                           Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text('$quantity', style: const TextStyle(fontSize: 16))),
                                           IconButton(
-                                            icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                                            icon: Icon(Icons.add_circle_outline, color: _primaryColor),
                                             onPressed: () => _changeQuantity(index, 1),
                                             constraints: const BoxConstraints(),
                                             padding: EdgeInsets.zero,
@@ -863,26 +893,36 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
                             ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
                         decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Colors.grey.shade300))),
                         child: Column(
                           children: [
-                            TextField(
-                              controller: _localCustomerNameController,
-                              decoration: const InputDecoration(labelText: 'Nome do Cliente (Opcional)', isDense: true, border: OutlineInputBorder()),
+                            Theme(
+                              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                              child: ExpansionTile(
+                                title: const Text('Dados do Cliente (Opcional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                                tilePadding: EdgeInsets.zero,
+                                childrenPadding: const EdgeInsets.only(bottom: 16),
+                                children: [
+                                  TextField(
+                                    controller: _localCustomerNameController,
+                                    decoration: const InputDecoration(labelText: 'Nome', isDense: true, border: OutlineInputBorder()),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: _localCustomerPhoneController,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: const InputDecoration(labelText: 'Telefone', isDense: true, border: OutlineInputBorder()),
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 8),
-                            TextField(
-                              controller: _localCustomerPhoneController,
-                              keyboardType: TextInputType.phone,
-                              decoration: const InputDecoration(labelText: 'Telefone (Opcional)', isDense: true, border: OutlineInputBorder()),
-                            ),
-                            const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('Total:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                                Text('R\$ ${total.toStringAsFixed(2)}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green.shade800)),
+                                Text('R\$ ${total.toStringAsFixed(2)}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _primaryColorDark)),
                               ],
                             ),
                             const SizedBox(height: 16),
@@ -891,7 +931,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
                               icon: _isSavingSale ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.point_of_sale),
                               label: Text(_isSavingSale ? 'Salvando...' : 'Finalizar Venda', style: const TextStyle(fontSize: 18)),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
+                                backgroundColor: _primaryColor,
                                 foregroundColor: Colors.white,
                                 minimumSize: const Size(double.infinity, 60),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -902,8 +942,38 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
                       ),
                     ],
                   ),
-                ),
-              ],
+                );
+
+                if (isMobile) {
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ElevatedButton.icon(
+                          onPressed: () => setState(() => _showCartOnMobile = !_showCartOnMobile),
+                          icon: Icon(_showCartOnMobile ? Icons.grid_view : Icons.shopping_cart),
+                          label: Text(_showCartOnMobile ? 'Voltar aos Produtos' : 'Ver Carrinho (${_cartItems.length} itens - R\$ ${total.toStringAsFixed(2)})'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryColorLight,
+                            foregroundColor: _primaryColorDark,
+                            minimumSize: const Size(double.infinity, 48),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ),
+                      if (!_showCartOnMobile) productsGrid,
+                      if (_showCartOnMobile) Expanded(child: cartContainer),
+                    ],
+                  );
+                } else {
+                  return Row(
+                    children: [
+                      productsGrid,
+                      cartContainer,
+                    ],
+                  );
+                }
+              },
             ),
             
             // TAB 2: GESTÃO DE PEDIDOS ONLINE
@@ -960,6 +1030,7 @@ class OnlineOrdersScreen extends StatelessWidget {
             ),
             Expanded(
               child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 80),
                 itemCount: todayOrders.length,
                 itemBuilder: (context, index) {
                   final data = todayOrders[index].data() as Map<String, dynamic>;
@@ -1149,8 +1220,11 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           color: Colors.blueGrey.shade50,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          width: double.infinity,
+          child: Wrap(
+            alignment: WrapAlignment.spaceAround,
+            spacing: 16,
+            runSpacing: 16,
             children: [
               _summaryCard('Em Dinheiro', totalDinheiro, Colors.green),
               _summaryCard('No PIX', totalPix, Colors.teal),
@@ -1166,6 +1240,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
         ),
         Expanded(
           child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: 80),
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
@@ -1236,13 +1311,16 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     return Card(
       elevation: 3,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-        width: 200, 
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+        width: 160, 
         child: Column(
           children: [
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 16)),
+            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 16), textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            Text('R\$ ${value.toStringAsFixed(2)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('R\$ ${value.toStringAsFixed(2)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+            ),
           ],
         ),
       ),
