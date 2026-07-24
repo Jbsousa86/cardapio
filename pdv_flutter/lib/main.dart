@@ -8,6 +8,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'pages/print_config_page.dart';
+import 'services/print_service.dart';
 
 Color _parseStoreColor(Map<String, dynamic>? config) {
   String? colorStr = config?['primaryColor']?.toString() ?? config?['themeColor']?.toString();
@@ -205,6 +208,16 @@ class StoresScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.print),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PrintConfigPage()),
+              );
+            },
+            tooltip: 'Configurações de Impressão',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => FirebaseAuth.instance.signOut(),
             tooltip: 'Sair',
@@ -301,8 +314,12 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   Timer? _alertTimer;
 
+  String _operatorName = 'Carregando...';
+
   final TextEditingController _localCustomerNameController = TextEditingController();
   final TextEditingController _localCustomerPhoneController = TextEditingController();
+  final TextEditingController _localCustomerAddressController = TextEditingController();
+  final TextEditingController _localCustomerObservationsController = TextEditingController();
 
   void _updateStoreInfo(Map<String, dynamic> data) {
     final config = data['CONFIG'] ?? {};
@@ -320,6 +337,16 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
     super.initState();
     _currentStoreData = widget.storeData;
     _updateStoreInfo(_currentStoreData);
+
+    final user = FirebaseAuth.instance.currentUser;
+    _operatorName = user?.email ?? 'Desconhecido';
+    SharedPreferences.getInstance().then((prefs) {
+      if (mounted) {
+        setState(() {
+          _operatorName = prefs.getString('custom_operator_name') ?? _operatorName;
+        });
+      }
+    });
 
     _storeSubscription = FirebaseFirestore.instance
         .collection('stores')
@@ -370,11 +397,26 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
           final status = data['status'] ?? 'novo';
           if (status == 'novo') {
             newOrderArrived = true;
-            Printing.layoutPdf(
-              onLayout: (format) => generateReceiptPdf(data, _storeName, widget.storeId),
-              name: 'Pedido_Online_${change.doc.id}',
-            );
             change.doc.reference.update({'status': 'impresso'});
+            
+            // Check config
+            PrintService().isEnabled().then((jbsEnabled) async {
+              if (jbsEnabled) {
+                // Envia automaticamente para o Jbs Print (em background)
+                try {
+                  final commands = await generateJbsPrintCommands(data, _storeName, widget.storeId, isOnline: true);
+                  PrintService().imprimirComprovante(commands);
+                } catch (printEx) {
+                  debugPrint('Erro ao enviar pedido online para Jbs Print: $printEx');
+                }
+              } else {
+                // Usa o oficial do Android
+                Printing.layoutPdf(
+                  onLayout: (format) => generateReceiptPdf(data, _storeName, widget.storeId),
+                  name: 'Pedido_Online_${change.doc.id}',
+                );
+              }
+            });
           }
         }
       }
@@ -537,6 +579,8 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
       _cartItems.clear();
       _localCustomerNameController.clear();
       _localCustomerPhoneController.clear();
+      _localCustomerAddressController.clear();
+      _localCustomerObservationsController.clear();
     });
   }
 
@@ -656,7 +700,7 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, foregroundColor: Colors.white),
                   onPressed: change >= 0 ? () {
                     Navigator.pop(context);
-                    _confirmAndSaveSale('Dinheiro');
+                    _confirmAndSaveSale('Dinheiro', changeFor: received);
                   } : null, 
                   child: const Text('Confirmar Pagamento'),
                 )
@@ -668,20 +712,23 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
     );
   }
 
-  Future<void> _confirmAndSaveSale(String paymentMethod) async {
+  Future<void> _confirmAndSaveSale(String paymentMethod, {double? changeFor}) async {
     setState(() => _isSavingSale = true);
     final total = _calculateTotal();
     final user = FirebaseAuth.instance.currentUser;
     final now = DateTime.now();
 
     final saleData = {
-      'timestamp': FieldValue.serverTimestamp(),
+      'timestamp': Timestamp.fromDate(now),
       'date': '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
       'total': total,
       'paymentMethod': paymentMethod,
-      'operator': user?.email ?? 'Desconhecido',
+      if (changeFor != null) 'changeFor': changeFor,
+      'operator': _operatorName,
       if (_localCustomerNameController.text.trim().isNotEmpty) 'customerName': _localCustomerNameController.text.trim(),
       if (_localCustomerPhoneController.text.trim().isNotEmpty) 'customerPhone': _localCustomerPhoneController.text.trim(),
+      if (_localCustomerAddressController.text.trim().isNotEmpty) 'address': _localCustomerAddressController.text.trim(),
+      if (_localCustomerObservationsController.text.trim().isNotEmpty) 'observations': _localCustomerObservationsController.text.trim(),
       'type': 'local',
       'items': _cartItems.map((item) {
         return {
@@ -700,10 +747,23 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
           .collection('sales')
           .add(saleData);
       
-      Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) => generateReceiptPdf(saleData, _storeName, widget.storeId),
-        name: 'Cupom_Venda',
-      );
+      final jbsEnabled = await PrintService().isEnabled();
+
+      if (jbsEnabled) {
+        // Envia automaticamente para o Jbs Print (em background)
+        try {
+          final commands = await generateJbsPrintCommands(saleData, _storeName, widget.storeId);
+          PrintService().imprimirComprovante(commands);
+        } catch (printEx) {
+          debugPrint('Erro ao enviar para Jbs Print: $printEx');
+        }
+      } else {
+        // Usa o oficial do Android
+        Printing.layoutPdf(
+          onLayout: (PdfPageFormat format) => generateReceiptPdf(saleData, _storeName, widget.storeId),
+          name: 'Cupom_Venda',
+        );
+      }
 
       _clearCart();
       
@@ -721,6 +781,39 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
     } finally {
       if (mounted) setState(() => _isSavingSale = false);
     }
+  }
+
+  void _changeOperatorNameDialog() {
+    final TextEditingController ctrl = TextEditingController(text: _operatorName);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Mudar Nome do Operador'),
+          content: TextField(
+            controller: ctrl,
+            decoration: const InputDecoration(labelText: 'Nome do Operador', border: OutlineInputBorder()),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, foregroundColor: Colors.white),
+              onPressed: () async {
+                final newName = ctrl.text.trim();
+                if (newName.isNotEmpty) {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString('custom_operator_name', newName);
+                  if (mounted) setState(() => _operatorName = newName);
+                }
+                if (mounted) Navigator.pop(context);
+              },
+              child: const Text('Salvar'),
+            )
+          ],
+        );
+      }
+    );
   }
 
   @override
@@ -754,6 +847,13 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
             ],
           ),
           actions: [
+            ElevatedButton.icon(
+              onPressed: _changeOperatorNameDialog,
+              icon: Icon(Icons.person, color: _primaryColor),
+              label: Text(_operatorName, style: TextStyle(color: _primaryColor)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+            ),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -941,6 +1041,17 @@ class _StorePDVScreenState extends State<StorePDVScreen> {
                                     controller: _localCustomerPhoneController,
                                     keyboardType: TextInputType.phone,
                                     decoration: const InputDecoration(labelText: 'Telefone', isDense: true, border: OutlineInputBorder()),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: _localCustomerAddressController,
+                                    decoration: const InputDecoration(labelText: 'Endereço', isDense: true, border: OutlineInputBorder()),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: _localCustomerObservationsController,
+                                    decoration: const InputDecoration(labelText: 'Observações', isDense: true, border: OutlineInputBorder()),
+                                    maxLines: 2,
                                   ),
                                 ],
                               ),
@@ -1459,6 +1570,10 @@ class ReceiptDialog extends StatelessWidget {
                       if (hasCustomer) ...[
                         Text('Cliente: ${saleData['customerName']}', style: const TextStyle(fontWeight: FontWeight.bold)),
                         Text('Tel: ${saleData['customerPhone'] ?? '-'}', style: const TextStyle(color: Colors.grey)),
+                        if (saleData['address'] != null && saleData['address'].toString().trim().isNotEmpty)
+                          Text('End: ${saleData['address']}', style: const TextStyle(color: Colors.grey)),
+                        if (saleData['observations'] != null && saleData['observations'].toString().trim().isNotEmpty)
+                          Text('Obs: ${saleData['observations']}', style: const TextStyle(color: Colors.grey)),
                       ],
                     ],
                     const Divider(height: 24, thickness: 1, color: Colors.grey),
@@ -1472,7 +1587,9 @@ class ReceiptDialog extends StatelessWidget {
                       final n = item['name'] ?? 'Produto';
                       final variant = item['variant'] != null ? ' - ${item['variant']}' : '';
                       final extras = item['extras'] as List<dynamic>? ?? [];
-                      String extrasStr = extras.isNotEmpty ? '\n  + ' + extras.join('\n  + ') : '';
+                      String extrasStr = extras.isNotEmpty 
+                          ? '\n  + ' + extras.map((e) => e is Map ? (e['price'] != null && (e['price'] as num) > 0 ? '${e['name']} (+ R\$ ${(e['price'] as num).toDouble().toStringAsFixed(2)})' : e['name'].toString()) : e.toString()).join('\n  + ') 
+                          : '';
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: Row(
@@ -1503,7 +1620,7 @@ class ReceiptDialog extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 8),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [const Text('TROCO PARA:'), Text('R\$ ${saleData['changeFor']}', style: const TextStyle(fontWeight: FontWeight.bold))],
+                          children: [const Text('TROCO PARA:'), Text('R\$ ${(saleData['changeFor'] as num).toDouble().toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold))],
                         ),
                       ),
                   ],
@@ -1531,7 +1648,22 @@ class ReceiptDialog extends StatelessWidget {
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white),
                       icon: const Icon(Icons.print, size: 18),
                       label: const Text('Imprimir'),
-                      onPressed: () => Printing.layoutPdf(onLayout: (PdfPageFormat format) => generateReceiptPdf(saleData, storeName, storeId), name: 'Cupom_$storeName'),
+                      onPressed: () async {
+                        final jbsEnabled = await PrintService().isEnabled();
+                        if (jbsEnabled) {
+                          try {
+                            final commands = await generateJbsPrintCommands(saleData, storeName, storeId, isOnline: isOnline, isReprint: true);
+                            PrintService().imprimirComprovante(commands);
+                          } catch (e) {
+                            debugPrint('Erro na reimpressao JbsPrint: $e');
+                          }
+                        } else {
+                          Printing.layoutPdf(
+                            onLayout: (PdfPageFormat format) => generateReceiptPdf(saleData, storeName, storeId),
+                            name: 'Cupom_$storeName'
+                          );
+                        }
+                      },
                     ),
                   ),
                 ],
@@ -1544,6 +1676,125 @@ class ReceiptDialog extends StatelessWidget {
       ),
     );
   }
+}
+
+// ----------------------------------------------------------------------
+// FUNCAO PARA REMOVER ACENTOS
+// ----------------------------------------------------------------------
+String removeDiacritics(String str) {
+  var withDia = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëðÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';
+  var withoutDia = 'AAAAAAaaaaaaOOOOOOOooooooEEEEeeeeeCcDIIIIiiiiUUUUuuuuNnSsYyyZz';
+  for (int i = 0; i < withDia.length; i++) {
+    str = str.replaceAll(withDia[i], withoutDia[i]);
+  }
+  return str;
+}
+
+// ----------------------------------------------------------------------
+// LÓGICA DE GERAÇÃO DO ARQUIVO PARA JBS PRINT (JSON COMMANDS)
+// ----------------------------------------------------------------------
+Future<List<Map<String, dynamic>>> generateJbsPrintCommands(Map<String, dynamic> saleData, String storeName, String storeId, {bool isOnline = false, bool isReprint = false}) async {
+  final storeDoc = await FirebaseFirestore.instance.collection('stores').doc(storeId).get();
+  final config = storeDoc.data()?['CONFIG'] as Map<String, dynamic>? ?? {};
+  
+  final storeDocument = config['document']?.toString() ?? '';
+  final storePhone = config['phone']?.toString() ?? '';
+  final storeAddress = config['address']?.toString() ?? '';
+
+  final List<Map<String, dynamic>> commands = [];
+
+  final items = saleData['items'] as List<dynamic>? ?? [];
+  final total = (saleData['total'] as num?)?.toDouble() ?? 0.0;
+  final method = saleData['paymentMethod'] ?? 'Desconhecido';
+  final operator = saleData['operator'] ?? 'Caixa';
+  final ts = saleData['timestamp'];
+  
+  String dateStr = 'Agora';
+  if (ts != null && ts.runtimeType.toString() == 'Timestamp') {
+    final dt = (ts as dynamic).toDate();
+    dateStr = '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  } else if (ts != null) {
+    dateStr = ts.toString();
+  }
+
+  final isOnlineOrder = saleData.containsKey('status');
+  final hasCustomer = saleData['customerName'] != null;
+
+  commands.add({"type": "text", "text": "$storeName\n", "align": "center", "bold": true});
+  if (storeDocument.isNotEmpty) {
+    commands.add({"type": "text", "text": "CNPJ/CPF: $storeDocument\n", "align": "center"});
+  }
+  if (storePhone.isNotEmpty) {
+    commands.add({"type": "text", "text": "Tel: $storePhone\n", "align": "center"});
+  }
+  if (storeAddress.isNotEmpty) {
+    commands.add({"type": "text", "text": "$storeAddress\n", "align": "center"});
+  }
+  
+  commands.add({"type": "text", "text": "\n"});
+  
+  if (isOnlineOrder) {
+    commands.add({"type": "text", "text": "PEDIDO ONLINE (DELIVERY)\n", "align": "center", "bold": true});
+    commands.add({"type": "text", "text": "--------------------------------\n"});
+    commands.add({"type": "text", "text": "Cliente: ${saleData['customerName']}\n"});
+    commands.add({"type": "text", "text": "Tel: ${saleData['customerPhone'] ?? '-'}\n"});
+    final end = saleData['address']?.toString() ?? saleData['customerAddress']?.toString() ?? '';
+    commands.add({"type": "text", "text": "Endereço/Obs: $end\n"});
+  } else {
+    String title = 'CUPOM NÃO FISCAL';
+    if (isReprint) title = 'REIMPRESSÃO - $title';
+    commands.add({"type": "text", "text": "$title\n", "align": "center"});
+    commands.add({"type": "text", "text": "--------------------------------\n"});
+    commands.add({"type": "text", "text": "Operador: $operator\n"});
+    if (hasCustomer) {
+      commands.add({"type": "text", "text": "Cliente: ${saleData['customerName']}\n"});
+      commands.add({"type": "text", "text": "Tel: ${saleData['customerPhone'] ?? '-'}\n"});
+      if (saleData['address'] != null && saleData['address'].toString().trim().isNotEmpty) {
+        commands.add({"type": "text", "text": "End: ${saleData['address']}\n"});
+      }
+      if (saleData['observations'] != null && saleData['observations'].toString().trim().isNotEmpty) {
+        commands.add({"type": "text", "text": "Obs: ${saleData['observations']}\n"});
+      }
+    }
+  }
+  
+  commands.add({"type": "text", "text": "Data: $dateStr\n"});
+  commands.add({"type": "text", "text": "--------------------------------\n"});
+  commands.add({"type": "text", "text": "QTD   ITEM\n", "bold": true});
+  commands.add({"type": "text", "text": "\n"});
+  
+  for (var item in items) {
+    final n = item['name'] ?? 'Produto';
+    final q = item['quantity'] ?? 1;
+    final variant = item['variant'] != null ? ' - ${item['variant']}' : '';
+    final extras = item['extras'] as List<dynamic>? ?? [];
+    String extrasStr = extras.isNotEmpty 
+        ? '\n  + ' + extras.map((e) => e is Map ? (e['price'] != null && (e['price'] as num) > 0 ? '${e['name']} (+ R\$ ${(e['price'] as num).toDouble().toStringAsFixed(2)})' : e['name'].toString()) : e.toString()).join('\n  + ') 
+        : '';
+    commands.add({"type": "text", "text": "${q.toString().padRight(4)}x $n$variant$extrasStr\n"});
+  }
+  
+  commands.add({"type": "text", "text": "--------------------------------\n"});
+  commands.add({"type": "text", "text": "TOTAL DA COMPRA:        R\$ ${total.toStringAsFixed(2)}\n", "bold": true});
+  commands.add({"type": "text", "text": "\n"});
+  commands.add({"type": "text", "text": "FORMA DE PAGAMENTO:     $method\n"});
+  
+  if (method.toString().toUpperCase() == 'DINHEIRO' && saleData['changeFor'] != null && saleData['changeFor'].toString().isNotEmpty) {
+    commands.add({"type": "text", "text": "TROCO PARA:             R\$ ${(saleData['changeFor'] as num).toDouble().toStringAsFixed(2)}\n"});
+  }
+  
+  commands.add({"type": "text", "text": "\n--------------------------------\n"});
+  commands.add({"type": "text", "text": "Obrigado pela preferencia!\n", "align": "center", "bold": true});
+  commands.add({"type": "text", "text": "\n\n\n"});
+  commands.add({"type": "cut"});
+  
+  for (var c in commands) {
+    if (c['text'] != null) {
+      c['text'] = removeDiacritics(c['text']);
+    }
+  }
+
+  return commands;
 }
 
 // ----------------------------------------------------------------------
@@ -1599,6 +1850,10 @@ Future<Uint8List> generateReceiptPdf(Map<String, dynamic> saleData, String store
               if (hasCustomer) ...[
                 pw.Text('Cliente: ${saleData['customerName']}', style: const pw.TextStyle(fontSize: 10)),
                 pw.Text('Tel: ${saleData['customerPhone'] ?? '-'}', style: const pw.TextStyle(fontSize: 10)),
+                if (saleData['address'] != null && saleData['address'].toString().trim().isNotEmpty)
+                  pw.Text('End: ${saleData['address']}', style: const pw.TextStyle(fontSize: 10)),
+                if (saleData['observations'] != null && saleData['observations'].toString().trim().isNotEmpty)
+                  pw.Text('Obs: ${saleData['observations']}', style: const pw.TextStyle(fontSize: 10)),
               ],
             ],
             pw.Text('Data: $dateStr', style: const pw.TextStyle(fontSize: 10)),
@@ -1610,7 +1865,9 @@ Future<Uint8List> generateReceiptPdf(Map<String, dynamic> saleData, String store
               final n = item['name'] ?? 'Produto';
               final variant = item['variant'] != null ? ' - ${item['variant']}' : '';
               final extras = item['extras'] as List<dynamic>? ?? [];
-              String extrasStr = extras.isNotEmpty ? '\n  + ' + extras.join('\n  + ') : '';
+              String extrasStr = extras.isNotEmpty 
+                  ? '\n  + ' + extras.map((e) => e is Map ? (e['price'] != null && (e['price'] as num) > 0 ? '${e['name']} (+ R\$ ${(e['price'] as num).toDouble().toStringAsFixed(2)})' : e['name'].toString()) : e.toString()).join('\n  + ') 
+                  : '';
               
               return pw.Container(
                 margin: const pw.EdgeInsets.only(top: 4, bottom: 4),
@@ -1640,7 +1897,7 @@ Future<Uint8List> generateReceiptPdf(Map<String, dynamic> saleData, String store
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text('TROCO PARA:', style: const pw.TextStyle(fontSize: 12)),
-                    pw.Text('R\$ ${saleData['changeFor']}', style: const pw.TextStyle(fontSize: 12)),
+                    pw.Text('R\$ ${(saleData['changeFor'] as num).toDouble().toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 12)),
                   ],
                 ),
               ),
